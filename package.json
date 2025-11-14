@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "dev": "rollup -c -w",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "version": "node scripts/version.js"
   },
   "devDependencies": {
     "obsidian": "latest",
