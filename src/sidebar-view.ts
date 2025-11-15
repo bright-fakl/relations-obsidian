@@ -109,10 +109,15 @@ export class RelationSidebarView extends ItemView {
 		// Create content container
 		this.contentContainer = container.createDiv('relation-sidebar-content');
 
-		// Prevent sidebar container from bubbling events to ItemView, except for toggle buttons and clickable names
+		// Prevent sidebar container from bubbling events to ItemView, except for interactive elements
 		this.containerEl.addEventListener('click', (e) => {
 			const target = e.target as Element;
-			if (target && !target.closest('.relation-tree-toggle') && !target.closest('.relation-tree-name-clickable')) {
+			// Allow clicks on: tree toggles, tree names, section headers, and sibling names
+			if (target &&
+				!target.closest('.relation-tree-toggle') &&
+				!target.closest('.relation-tree-name-clickable') &&
+				!target.closest('.relation-section-header') &&
+				!target.closest('.relation-sibling-name')) {
 				e.stopPropagation();
 			}
 		}, { capture: true });
@@ -359,7 +364,6 @@ export class RelationSidebarView extends ItemView {
 		engine: any,
 		graph: any
 	): void {
-		console.log('[Relation Sidebar] >>> Rendering section:', sectionType);
 		const sectionConfig = fieldConfig[sectionType];
 		const sectionContainer = this.contentContainer.createDiv('relation-section');
 		sectionContainer.addClass(`relation-section-${sectionType}`);
@@ -370,7 +374,6 @@ export class RelationSidebarView extends ItemView {
 
 		// Create section header (clickable to toggle)
 		const header = sectionContainer.createDiv('relation-section-header');
-		console.log('[Relation Sidebar] >>> Created header for:', sectionType);
 
 		// Add toggle button
 		const toggle = header.createDiv('relation-section-toggle');
@@ -379,24 +382,11 @@ export class RelationSidebarView extends ItemView {
 		const title = header.createDiv('relation-section-title');
 		title.setText(sectionConfig.displayName || sectionType);
 
-		console.log('[Relation Sidebar] >>> Attaching click listener to header:', sectionType);
-
 		// Make entire header clickable
 		header.addEventListener('click', (e) => {
-			console.log('[Relation Sidebar] *** HEADER CLICKED ***:', sectionType);
 			e.preventDefault();
 			e.stopPropagation();
 			this.toggleSection(sectionType);
-		});
-
-		// Also test with mouseenter
-		header.addEventListener('mouseenter', () => {
-			console.log('[Relation Sidebar] >>> Mouse entered header:', sectionType);
-		});
-
-		console.log('[Relation Sidebar] >>> Listener attached. Header styles:', {
-			pointerEvents: header.style.pointerEvents || 'not set',
-			cursor: header.style.cursor || 'not set'
 		});
 
 		// Create section content
@@ -428,9 +418,7 @@ export class RelationSidebarView extends ItemView {
 	 * Renders siblings as a flat list instead of a tree.
 	 */
 	private renderSiblingsList(file: TFile, engine: any, container: HTMLElement): void {
-		console.log('[Relation Sidebar] >>> Rendering siblings list');
 		const siblings = engine.getSiblings(file, false); // Exclude self
-		console.log('[Relation Sidebar] >>> Found siblings:', siblings.length);
 
 		if (siblings.length === 0) {
 			const emptyMessage = container.createDiv('relation-section-empty');
@@ -440,8 +428,7 @@ export class RelationSidebarView extends ItemView {
 
 		const listContainer = container.createDiv('relation-siblings-list');
 
-		siblings.forEach((sibling: TFile, index: number) => {
-			console.log(`[Relation Sidebar] >>> Creating sibling item ${index + 1}/${siblings.length}:`, sibling.basename);
+		siblings.forEach((sibling: TFile) => {
 			const item = listContainer.createDiv('relation-sibling-item');
 
 			// File icon
@@ -452,36 +439,22 @@ export class RelationSidebarView extends ItemView {
 			const name = item.createSpan('relation-sibling-name');
 			name.setText(sibling.basename);
 
-			console.log(`[Relation Sidebar] >>> Attaching click listener to sibling:`, sibling.basename);
+			// Click to open file
 			name.addEventListener('click', async (e) => {
-				console.log('[Relation Sidebar] *** SIBLING CLICKED ***:', sibling.basename, sibling.path);
 				e.preventDefault();
 				e.stopPropagation();
 
 				try {
-					// Open file
+					// Open file in split pane if Ctrl/Cmd is held
 					if (e.ctrlKey || e.metaKey) {
-						console.log('[Relation Sidebar] Opening in split pane');
 						await this.app.workspace.openLinkText(sibling.basename, '', 'split');
 					} else {
-						console.log('[Relation Sidebar] Opening file:', sibling);
 						const leaf = this.app.workspace.getLeaf(false);
 						await leaf.openFile(sibling);
 					}
-					console.log('[Relation Sidebar] File opened successfully');
 				} catch (error) {
 					console.error('[Relation Sidebar] Error opening file:', error);
 				}
-			});
-
-			// Also test with mouseenter
-			name.addEventListener('mouseenter', () => {
-				console.log('[Relation Sidebar] >>> Mouse entered sibling:', sibling.basename);
-			});
-
-			console.log(`[Relation Sidebar] >>> Sibling name element styles:`, {
-				pointerEvents: name.style.pointerEvents || 'not set',
-				cursor: name.style.cursor || 'not set'
 			});
 
 			// Hover preview
@@ -501,7 +474,6 @@ export class RelationSidebarView extends ItemView {
 	 * Toggles a section's collapsed state.
 	 */
 	private toggleSection(sectionType: string): void {
-		console.log('[Relation Sidebar] toggleSection called for:', sectionType);
 		const fieldName = this.viewState.selectedParentField;
 
 		// Initialize collapsed sections for this field if needed
@@ -512,20 +484,13 @@ export class RelationSidebarView extends ItemView {
 		const collapsedSections = this.viewState.collapsedSections[fieldName];
 		const index = collapsedSections.indexOf(sectionType);
 
-		console.log('[Relation Sidebar] Current collapsed sections:', collapsedSections);
-		console.log('[Relation Sidebar] Section index:', index);
-
 		if (index >= 0) {
 			// Expand
 			collapsedSections.splice(index, 1);
-			console.log('[Relation Sidebar] Expanding section:', sectionType);
 		} else {
 			// Collapse
 			collapsedSections.push(sectionType);
-			console.log('[Relation Sidebar] Collapsing section:', sectionType);
 		}
-
-		console.log('[Relation Sidebar] New collapsed sections:', collapsedSections);
 
 		// Re-render to update UI
 		this.updateView();
