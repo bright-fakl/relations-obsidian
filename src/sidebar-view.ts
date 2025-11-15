@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, setIcon } from 'obsidian';
 import type ParentRelationPlugin from './main';
 import { TreeRenderer } from './tree-renderer';
 import { buildAncestorTree, buildDescendantTree, buildSiblingTree, TreeNode } from './tree-model';
@@ -114,14 +114,15 @@ export class RelationSidebarView extends ItemView {
 		// Prevent sidebar container from bubbling events to ItemView, except for interactive elements
 		this.containerEl.addEventListener('click', (e) => {
 			const target = e.target as Element;
-			// Allow clicks on: tree toggles, tree names, section headers, sibling names, and field selector buttons
+			// Allow clicks on: tree toggles, tree names, section headers, sibling names, field selector buttons, and pin button
 			if (target &&
 				!target.closest('.relation-tree-toggle') &&
 				!target.closest('.relation-tree-name-clickable') &&
 				!target.closest('.relation-section-header') &&
 				!target.closest('.relation-sibling-name') &&
 				!target.closest('.parent-field-segment') &&
-				!target.closest('.parent-field-dropdown')) {
+				!target.closest('.parent-field-dropdown') &&
+				!target.closest('.relation-sidebar-pin-button')) {
 				e.stopPropagation();
 			}
 		}, { capture: true });
@@ -161,9 +162,20 @@ export class RelationSidebarView extends ItemView {
 
 		const header = this.headerContainer.createDiv('relation-sidebar-header');
 
-		// Title
-		const title = header.createDiv('relation-sidebar-title');
+		// Title and controls row
+		const titleRow = header.createDiv('relation-sidebar-title-row');
+
+		const title = titleRow.createDiv('relation-sidebar-title');
 		title.setText('Relation Explorer');
+
+		// Pin button
+		const controls = titleRow.createDiv('relation-sidebar-controls');
+		const pinButton = controls.createDiv('relation-sidebar-pin-button');
+		this.updatePinButton(pinButton);
+
+		pinButton.addEventListener('click', () => {
+			this.togglePin();
+		});
 
 		// Parent field selector (only shown if multiple fields)
 		if (this.plugin.settings.parentFields.length > 1) {
@@ -190,6 +202,38 @@ export class RelationSidebarView extends ItemView {
 	private onFieldChange(fieldName: string): void {
 		this.viewState.selectedParentField = fieldName;
 		this.updateView();
+	}
+
+	/**
+	 * Updates the pin button appearance based on current pin state.
+	 */
+	private updatePinButton(button: HTMLElement): void {
+		button.empty();
+		const isPinned = this.isPinned();
+
+		if (isPinned) {
+			setIcon(button, 'pin');
+			button.addClass('is-active');
+			button.setAttribute('aria-label', 'Unpin from this note');
+		} else {
+			setIcon(button, 'pin');
+			button.removeClass('is-active');
+			button.setAttribute('aria-label', 'Pin to this note');
+		}
+	}
+
+	/**
+	 * Toggles the pin state for the current parent field.
+	 */
+	private togglePin(): void {
+		if (this.isPinned()) {
+			this.unpin();
+		} else {
+			this.pin();
+		}
+
+		// Update header to refresh pin button state
+		this.createHeader();
 	}
 
 	/**
