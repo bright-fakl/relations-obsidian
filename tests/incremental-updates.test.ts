@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RelationGraph } from '../src/relation-graph';
+import { FrontmatterCache } from '../src/frontmatter-cache';
 import { TFile, App, CachedMetadata } from 'obsidian';
 
 // Mock TFile factory
@@ -59,10 +60,12 @@ function addFileToVault(app: App, file: TFile) {
 describe('Incremental Graph Updates', () => {
   let app: App;
   let graph: RelationGraph;
+  let frontmatterCache: FrontmatterCache;
 
   beforeEach(() => {
     app = createMockApp();
-    graph = new RelationGraph(app, 'parent');
+    frontmatterCache = new FrontmatterCache(app);
+    graph = new RelationGraph(app, 'parent', 5, frontmatterCache);
   });
 
   describe('updateNode()', () => {
@@ -80,6 +83,7 @@ describe('Incremental Graph Updates', () => {
 
       // Add B with A as parent
       setMetadata(app, fileB, { parent: '[[A]]' });
+      frontmatterCache.invalidate(fileB);
       graph.updateNode(fileB);
 
       // Verify B is in graph
@@ -113,6 +117,7 @@ describe('Incremental Graph Updates', () => {
 
       // Change A's parent to C
       setMetadata(app, fileA, { parent: '[[C]]' });
+      frontmatterCache.invalidate(fileA);
       graph.updateNode(fileA);
 
       // Verify A's parent changed
@@ -142,6 +147,7 @@ describe('Incremental Graph Updates', () => {
 
       // Add second parent
       setMetadata(app, fileA, { parent: ['[[B]]', '[[C]]'] });
+      frontmatterCache.invalidate(fileA);
       graph.updateNode(fileA);
 
       // Verify A has both parents
@@ -166,6 +172,7 @@ describe('Incremental Graph Updates', () => {
 
       // Remove parent
       setMetadata(app, fileA, {});
+      frontmatterCache.invalidate(fileA);
       graph.updateNode(fileA);
 
       // Verify A has no parents
@@ -200,6 +207,7 @@ describe('Incremental Graph Updates', () => {
 
       // Change A's parent
       setMetadata(app, fileA, { parent: '[[C]]' });
+      frontmatterCache.invalidate(fileA);
       graph.updateNode(fileA);
 
       // Verify children still intact
@@ -441,9 +449,11 @@ describe('Incremental Graph Updates', () => {
 
       // Series of updates
       setMetadata(app, fileB, { parent: '[[C]]' });
+      frontmatterCache.invalidate(fileB);
       graph.updateNode(fileB);
 
       setMetadata(app, fileC, { parent: '[[A]]' });
+      frontmatterCache.invalidate(fileC);
       graph.updateNode(fileC);
 
       // Verify bidirectional consistency
@@ -476,6 +486,7 @@ describe('Incremental Graph Updates', () => {
 
       // Create cycle by updating B
       setMetadata(app, fileB, { parent: '[[A]]' });
+      frontmatterCache.invalidate(fileB);
       graph.updateNode(fileB);
 
       // Cycle should be detected
@@ -500,12 +511,15 @@ describe('Incremental Graph Updates', () => {
 
       // Rapid updates
       setMetadata(app, fileA, { parent: '[[B]]' });
+      frontmatterCache.invalidate(fileA);
       graph.updateNode(fileA);
 
       setMetadata(app, fileB, { parent: '[[C]]' });
+      frontmatterCache.invalidate(fileB);
       graph.updateNode(fileB);
 
       setMetadata(app, fileC, { parent: '[[A]]' });
+      frontmatterCache.invalidate(fileC);
       graph.updateNode(fileC);
 
       // Graph should remain consistent
@@ -521,7 +535,7 @@ describe('Incremental Graph Updates', () => {
       // Create a graph with many nodes
       const files: TFile[] = [];
       for (let i = 0; i < 100; i++) {
-        const file = createMockFile(`file${i}.md`, `File${i}`);
+        const file = createMockFile(`File${i}`);
         files.push(file);
         addFileToVault(app, file);
         setMetadata(app, file, {});
@@ -532,6 +546,7 @@ describe('Incremental Graph Updates', () => {
       // Time an update
       const start = performance.now();
       setMetadata(app, files[0], { parent: '[[File1]]' });
+      frontmatterCache.invalidate(files[0]);
       graph.updateNode(files[0]);
       const duration = performance.now() - start;
 
@@ -554,6 +569,7 @@ describe('Incremental Graph Updates', () => {
 
       // Warm up - run once to eliminate any first-run overhead
       setMetadata(app, files[100], { parent: '[[File0]]' });
+      frontmatterCache.invalidate(files[100]);
       graph.updateNode(files[100]);
 
       // Time full rebuild (average of 3 runs for stability)
@@ -569,6 +585,7 @@ describe('Incremental Graph Updates', () => {
       let totalUpdateTime = 0;
       for (let i = 0; i < 3; i++) {
         setMetadata(app, files[150], { parent: `[[File${i}]]` });
+        frontmatterCache.invalidate(files[150]);
         const start = performance.now();
         graph.updateNode(files[150]);
         totalUpdateTime += performance.now() - start;
