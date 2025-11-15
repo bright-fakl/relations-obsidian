@@ -379,6 +379,7 @@ export class RelationSidebarView extends ItemView {
 
 		// Make entire header clickable
 		header.addEventListener('click', (e) => {
+			console.log('[Relation Sidebar] Header clicked for section:', sectionType);
 			e.preventDefault();
 			e.stopPropagation();
 			this.toggleSection(sectionType);
@@ -434,14 +435,23 @@ export class RelationSidebarView extends ItemView {
 			const name = item.createSpan('relation-sibling-name');
 			name.setText(sibling.basename);
 			name.addEventListener('click', async (e) => {
+				console.log('[Relation Sidebar] Sibling clicked:', sibling.basename, sibling.path);
 				e.preventDefault();
 				e.stopPropagation();
 
-				// Open file
-				if (e.ctrlKey || e.metaKey) {
-					await this.app.workspace.openLinkText(sibling.basename, '', 'split');
-				} else {
-					await this.app.workspace.getLeaf().openFile(sibling);
+				try {
+					// Open file
+					if (e.ctrlKey || e.metaKey) {
+						console.log('[Relation Sidebar] Opening in split pane');
+						await this.app.workspace.openLinkText(sibling.basename, '', 'split');
+					} else {
+						console.log('[Relation Sidebar] Opening file:', sibling);
+						const leaf = this.app.workspace.getLeaf(false);
+						await leaf.openFile(sibling);
+					}
+					console.log('[Relation Sidebar] File opened successfully');
+				} catch (error) {
+					console.error('[Relation Sidebar] Error opening file:', error);
 				}
 			});
 
@@ -462,6 +472,7 @@ export class RelationSidebarView extends ItemView {
 	 * Toggles a section's collapsed state.
 	 */
 	private toggleSection(sectionType: string): void {
+		console.log('[Relation Sidebar] toggleSection called for:', sectionType);
 		const fieldName = this.viewState.selectedParentField;
 
 		// Initialize collapsed sections for this field if needed
@@ -472,13 +483,20 @@ export class RelationSidebarView extends ItemView {
 		const collapsedSections = this.viewState.collapsedSections[fieldName];
 		const index = collapsedSections.indexOf(sectionType);
 
+		console.log('[Relation Sidebar] Current collapsed sections:', collapsedSections);
+		console.log('[Relation Sidebar] Section index:', index);
+
 		if (index >= 0) {
 			// Expand
 			collapsedSections.splice(index, 1);
+			console.log('[Relation Sidebar] Expanding section:', sectionType);
 		} else {
 			// Collapse
 			collapsedSections.push(sectionType);
+			console.log('[Relation Sidebar] Collapsing section:', sectionType);
 		}
+
+		console.log('[Relation Sidebar] New collapsed sections:', collapsedSections);
 
 		// Re-render to update UI
 		this.updateView();
