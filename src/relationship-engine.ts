@@ -78,4 +78,74 @@ export class RelationshipEngine {
 
     return result;
   }
+
+  /**
+   * Gets descendants of a file, organized by generation.
+   *
+   * Uses breadth-first search to traverse child relationships, organizing
+   * results by generation level (children, grandchildren, great-grandchildren, etc.).
+   * Includes cycle protection to prevent infinite loops.
+   *
+   * @param file - The file to get descendants for
+   * @param maxDepth - Maximum depth to traverse (default: from settings)
+   * @returns Array of arrays: [[children], [grandchildren], [great-grandchildren], ...]
+   *
+   * @example
+   * // Given: D → C → B → A (A is child of B, B is child of C, C is child of D)
+   * // getDescendants(D, 3) returns:
+   * // [
+   * //   [C],           // Generation 1: children
+   * //   [B],           // Generation 2: grandchildren
+   * //   [A]            // Generation 3: great-grandchildren
+   * // ]
+   *
+   * @example
+   * // Given: D → B, D → C; B → A, C → A (A has two parents B and C, both children of D)
+   * // getDescendants(D, 2) returns:
+   * // [
+   * //   [B, C],        // Generation 1: children
+   * //   [A]            // Generation 2: grandchildren (merged from both paths)
+   * // ]
+   */
+  getDescendants(file: TFile, maxDepth?: number): TFile[][] {
+    const depth = maxDepth ?? this.graph.getMaxDepth();
+    const result: TFile[][] = [];
+    const visited = new Set<string>();
+
+    // Mark starting file as visited to prevent cycles back to self
+    visited.add(file.path);
+
+    // BFS: current generation
+    let currentGeneration = [file];
+
+    for (let level = 0; level < depth; level++) {
+      const nextGeneration: TFile[] = [];
+      const seenInGeneration = new Set<string>();
+
+      // Process all files in current generation
+      for (const current of currentGeneration) {
+        const children = this.graph.getChildren(current);
+
+        for (const child of children) {
+          // Skip if already visited (cycle protection)
+          if (visited.has(child.path)) continue;
+
+          // Skip if already added to this generation (deduplication)
+          if (seenInGeneration.has(child.path)) continue;
+
+          nextGeneration.push(child);
+          seenInGeneration.add(child.path);
+          visited.add(child.path);
+        }
+      }
+
+      // If no more children, stop traversal
+      if (nextGeneration.length === 0) break;
+
+      result.push(nextGeneration);
+      currentGeneration = nextGeneration;
+    }
+
+    return result;
+  }
 }
