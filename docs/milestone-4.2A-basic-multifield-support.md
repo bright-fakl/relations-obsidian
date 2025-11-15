@@ -469,62 +469,15 @@ export default class ParentRelationPlugin extends Plugin {
 }
 ```
 
-#### Migration Logic:
+#### Settings Loading:
 
 ```typescript
 async loadSettings() {
-  const data = await this.loadData();
-
-  // Migrate old settings format to new format
-  if (data && !data.parentFields) {
-    // Old format detected
-    this.settings = this.migrateSettings(data);
-  } else {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
-  }
-}
-
-/**
- * Migrates old single-field settings to new multi-field format.
- */
-private migrateSettings(oldSettings: any): ParentRelationSettings {
-  const fieldName = oldSettings.parentField || 'parent';
-  const maxDepth = oldSettings.maxDepth || 5;
-
-  const defaultField: ParentFieldConfig = {
-    name: fieldName,
-    displayName: fieldName.charAt(0).toUpperCase() + fieldName.slice(1),
-    ancestors: {
-      displayName: 'Ancestors',
-      visible: true,
-      collapsed: false,
-      maxDepth: maxDepth,
-      initialDepth: 2
-    },
-    descendants: {
-      displayName: 'Descendants',
-      visible: true,
-      collapsed: false,
-      maxDepth: maxDepth,
-      initialDepth: 2
-    },
-    siblings: {
-      displayName: 'Siblings',
-      visible: true,
-      collapsed: false,
-      sortOrder: 'alphabetical',
-      includeSelf: false
-    }
-  };
-
-  return {
-    parentFields: [defaultField],
-    defaultParentField: fieldName,
-    uiStyle: 'auto',
-    diagnosticMode: oldSettings.diagnosticMode || false
-  };
+  this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 }
 ```
+
+**Note:** No migration logic needed - this is a breaking change from the previous version.
 
 ---
 
@@ -1367,16 +1320,6 @@ describe('Milestone 4.2A: Basic Multi-Field Support', () => {
     });
   });
 
-  describe('Settings Migration', () => {
-    it('should migrate old settings to new format', () => {
-      // Test migration from single field to multi-field
-    });
-
-    it('should preserve maxDepth during migration', () => {
-      // Verify maxDepth carried over
-    });
-  });
-
   describe('Performance', () => {
     it('should use cache to avoid redundant parsing', () => {
       // Verify cache hit on multiple field access
@@ -1420,7 +1363,6 @@ describe('Milestone 4.2A: Basic Multi-Field Support', () => {
     - [ ] Add `getGraphForField()` method
     - [ ] Add `getEngineForField()` method
     - [ ] Update event handlers to update all graphs
-    - [ ] Add migration logic in `loadSettings()`
 
 - [ ] **Update RelationGraph**
   - [ ] Modify `src/relation-graph.ts`:
@@ -1472,23 +1414,20 @@ describe('Milestone 4.2A: Basic Multi-Field Support', () => {
   - [ ] Write ParentFieldSelector tests
   - [ ] Write sidebar sections tests
   - [ ] Write per-field pinning tests
-  - [ ] Write settings migration tests
   - [ ] Write performance tests
 
 - [ ] **Manual Testing**
-  - [ ] Test with 1 parent field (backward compatibility)
+  - [ ] Test with 1 parent field
   - [ ] Test with 2-4 parent fields (segmented control)
   - [ ] Test with >4 parent fields (dropdown)
   - [ ] Test field switching updates all sections
   - [ ] Test per-field pinning
   - [ ] Test section collapse/expand
-  - [ ] Test settings migration from old format
   - [ ] Test performance with cache
 
 - [ ] **Documentation**
   - [ ] Add JSDoc comments to all new code
   - [ ] Update README with multi-field feature
-  - [ ] Document settings migration
   - [ ] Add usage examples
 
 ---
@@ -1563,7 +1502,7 @@ From specification:
 
 **Scenario:** Default field removed from list
 **Handling:** Auto-select first available field
-**Migration:** Update `defaultParentField` setting
+**Action:** Update `defaultParentField` setting
 
 ### 5. Pinned File Deleted
 
@@ -1579,79 +1518,12 @@ From specification:
 
 ---
 
-## Migration Strategy
-
-### Backward Compatibility
-
-✅ **Automatic Migration**
-- Old settings format automatically detected
-- Converts single `parentField` to array format
-- Preserves `maxDepth` and `diagnosticMode`
-
-### Migration Example
-
-**Before (old format):**
-```json
-{
-  "parentField": "parent",
-  "maxDepth": 5,
-  "diagnosticMode": false
-}
-```
-
-**After (new format):**
-```json
-{
-  "parentFields": [
-    {
-      "name": "parent",
-      "displayName": "Parent",
-      "ancestors": {
-        "displayName": "Ancestors",
-        "visible": true,
-        "collapsed": false,
-        "maxDepth": 5,
-        "initialDepth": 2
-      },
-      "descendants": {
-        "displayName": "Descendants",
-        "visible": true,
-        "collapsed": false,
-        "maxDepth": 5,
-        "initialDepth": 2
-      },
-      "siblings": {
-        "displayName": "Siblings",
-        "visible": true,
-        "collapsed": false,
-        "sortOrder": "alphabetical",
-        "includeSelf": false
-      }
-    }
-  ],
-  "defaultParentField": "parent",
-  "uiStyle": "auto",
-  "diagnosticMode": false
-}
-```
-
-### Testing Migration
-
-- [ ] Test with fresh install (new format)
-- [ ] Test with existing install (migration)
-- [ ] Verify all settings preserved
-- [ ] Verify graphs rebuild correctly
-
----
-
 ## Success Metrics
 
 - ✅ All acceptance criteria met
 - ✅ All tests passing (new + existing)
-- ✅ Settings migration works flawlessly
 - ✅ Performance improvement measurable (3× for 3 fields)
 - ✅ No regressions in existing functionality
-- ✅ Zero breaking changes in public API
 - ✅ UI is intuitive and responsive
 
 ---
@@ -1685,12 +1557,7 @@ From specification:
    - **Monitoring:** Track memory in diagnostic mode
    - **Limit:** Document recommended max fields (e.g., 5-10)
 
-3. **Risk:** Settings migration fails for edge cases
-   - **Mitigation:** Defensive migration logic
-   - **Testing:** Test various old settings formats
-   - **Fallback:** Provide manual reset option
-
-4. **Risk:** UI performance degrades with many fields
+3. **Risk:** UI performance degrades with many fields
    - **Mitigation:** Dropdown for >4 fields
    - **Testing:** Test with 10+ fields
    - **Optimization:** Virtual rendering if needed
@@ -1732,7 +1599,7 @@ Deferred to **Milestone 4.2B**:
 
 ## Appendix A: Example Usage
 
-### Single Field (Backward Compatible)
+### Single Field
 
 ```typescript
 // Settings
@@ -1747,10 +1614,10 @@ Deferred to **Milestone 4.2B**:
   "defaultParentField": "parent"
 }
 
-// Behavior: Works exactly like before, but with new UI
+// Behavior: Single parent field with three sections
 ```
 
-### Multiple Fields (New Functionality)
+### Multiple Fields
 
 ```typescript
 // Settings
