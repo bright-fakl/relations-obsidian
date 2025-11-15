@@ -12,8 +12,11 @@ export class RelationGraph {
   private graph = new Map<string, NodeInfo>();
   private cycleDetector!: CycleDetector;
   private graphValidator!: GraphValidator;
+  private maxDepth: number;
 
-  constructor(private app: App, private parentField: string) {}
+  constructor(private app: App, private parentField: string, maxDepth: number = 5) {
+    this.maxDepth = maxDepth;
+  }
 
   build() {
     const files = this.app.vault.getMarkdownFiles();
@@ -62,6 +65,24 @@ export class RelationGraph {
    */
   getAllFiles(): TFile[] {
     return Array.from(this.graph.values()).map(node => node.file);
+  }
+
+  /**
+   * Gets the maximum depth setting for traversals.
+   *
+   * @returns Maximum depth from plugin settings
+   */
+  getMaxDepth(): number {
+    return this.maxDepth;
+  }
+
+  /**
+   * Updates the maximum depth setting.
+   *
+   * @param maxDepth - New maximum depth value
+   */
+  setMaxDepth(maxDepth: number): void {
+    this.maxDepth = maxDepth;
   }
 
   /**
