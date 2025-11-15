@@ -702,17 +702,26 @@ class ParentRelationSettingTab extends PluginSettingTab {
     containerEl.createEl('h2', { text: 'Parent Relation Explorer Settings' });
 
     // Parent Fields (comma-separated list)
+    let parentFieldsValue = this.plugin.settings.parentFields.map(f => f.name).join(', ');
+
     new Setting(containerEl)
       .setName('Parent Fields')
-      .setDesc('Comma-separated list of frontmatter fields to track (e.g., "parent, project, category")')
+      .setDesc('Comma-separated list of frontmatter fields to track (e.g., "parent, project, category"). Click "Apply" to save changes.')
       .addText(text => {
-        const fieldNames = this.plugin.settings.parentFields.map(f => f.name).join(', ');
-
         text
           .setPlaceholder('parent, project, category')
-          .setValue(fieldNames)
-          .onChange(async value => {
-            await this.handleParentFieldsChange(value);
+          .setValue(parentFieldsValue)
+          .onChange(value => {
+            // Just store the value, don't trigger rebuild yet
+            parentFieldsValue = value;
+          });
+      })
+      .addButton(button => {
+        button
+          .setButtonText('Apply')
+          .setCta()
+          .onClick(async () => {
+            await this.handleParentFieldsChange(parentFieldsValue);
           });
       });
 
