@@ -292,54 +292,32 @@ export class RelationSidebarView extends ItemView {
 	 * Builds a tree based on the current display mode.
 	 */
 	private buildTreeForMode(file: TFile) {
-		const engine = this.plugin.relationshipEngine;
-		const graph = this.plugin.relationGraph;
+		// Get the engine and graph for the currently selected parent field
+		const engine = this.plugin.getEngineForField(this.viewState.selectedParentField);
+		const graph = this.plugin.getGraphForField(this.viewState.selectedParentField);
 
-		switch (this.viewState.mode) {
-			case SidebarDisplayMode.ANCESTORS:
-				// Debug: Check what ancestors are found
-				const ancestors = engine.getAncestors(file, this.plugin.settings.maxDepth);
-				console.log('[Relation Explorer] Raw ancestors from engine:', ancestors);
-				console.log('[Relation Explorer] Ancestors length:', ancestors.length);
-				
-				return buildAncestorTree(file, engine, graph, {
-					maxDepth: this.plugin.settings.maxDepth,
-					detectCycles: true,
-					includeMetadata: true
-				});
-
-			case SidebarDisplayMode.DESCENDANTS:
-				// Will be implemented in future milestone
-				// For now, fall back to ancestors
-				return buildAncestorTree(file, engine, graph, {
-					maxDepth: this.plugin.settings.maxDepth,
-					detectCycles: true,
-					includeMetadata: true
-				});
-
-			case SidebarDisplayMode.FULL_LINEAGE:
-				// Will be implemented in future milestone
-				return buildAncestorTree(file, engine, graph, {
-					maxDepth: this.plugin.settings.maxDepth,
-					detectCycles: true,
-					includeMetadata: true
-				});
-
-			case SidebarDisplayMode.SIBLINGS:
-				// Will be implemented in future milestone
-				return buildAncestorTree(file, engine, graph, {
-					maxDepth: this.plugin.settings.maxDepth,
-					detectCycles: true,
-					includeMetadata: true
-				});
-
-			default:
-				return buildAncestorTree(file, engine, graph, {
-					maxDepth: this.plugin.settings.maxDepth,
-					detectCycles: true,
-					includeMetadata: true
-				});
+		if (!engine || !graph) {
+			console.error('[Relation Explorer] No engine or graph found for field:', this.viewState.selectedParentField);
+			return null;
 		}
+
+		// Get the field configuration for maxDepth
+		const fieldConfig = this.plugin.settings.parentFields.find(
+			f => f.name === this.viewState.selectedParentField
+		);
+		const maxDepth = fieldConfig?.ancestors.maxDepth ?? 5;
+
+		// For now, always show ancestors (Phase 2 will add mode switching)
+		// Debug: Check what ancestors are found
+		const ancestors = engine.getAncestors(file, maxDepth);
+		console.log('[Relation Explorer] Raw ancestors from engine:', ancestors);
+		console.log('[Relation Explorer] Ancestors length:', ancestors.length);
+
+		return buildAncestorTree(file, engine, graph, {
+			maxDepth: maxDepth,
+			detectCycles: true,
+			includeMetadata: true
+		});
 	}
 
 	/**
