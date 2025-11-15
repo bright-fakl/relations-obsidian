@@ -106,6 +106,7 @@ function buildTreeFromGenerations(
 	file: TFile,
 	depth: number,
 	generations: TFile[][],
+	engine: RelationshipEngine,
 	graph: RelationGraph,
 	options: TreeBuildOptions
 ): TreeNode {
@@ -116,6 +117,12 @@ function buildTreeFromGenerations(
 
 	// Create node
 	const node = createTreeNode(file, depth, isCycle, options);
+
+	// Check if we've reached max depth
+	const maxDepth = options.maxDepth ?? Infinity;
+	if (depth >= maxDepth) {
+		return node;
+	}
 
 	// If we have more generations, build children
 	if (generations.length > 0) {
@@ -133,6 +140,7 @@ function buildTreeFromGenerations(
 				child,
 				depth + 1,
 				remainingGenerations,
+				engine,
 				graph,
 				options
 			);
@@ -194,12 +202,16 @@ export function buildAncestorTree(
 	const ancestors = engine.getAncestors(file, maxDepth);
 
 	// Build tree structure
-	return buildTreeFromGenerations(file, 0, ancestors, graph, {
-		maxDepth,
-		detectCycles,
-		includeMetadata,
-		filter,
-		metadataProvider
+	if (!graph.supportsCycleDetection()) {
+	  graph.build(); // Ensure cycleDetector is initialized
+	}
+
+	return buildTreeFromGenerations(file, 0, ancestors, engine, graph, {
+	  maxDepth,
+	  detectCycles,
+	  includeMetadata,
+	  filter,
+	  metadataProvider
 	});
 }
 
@@ -230,7 +242,7 @@ export function buildDescendantTree(
 	const descendants = engine.getDescendants(file, maxDepth);
 
 	// Build tree structure
-	return buildTreeFromGenerations(file, 0, descendants, graph, {
+	return buildTreeFromGenerations(file, 0, descendants, engine, graph, {
 		maxDepth,
 		detectCycles,
 		includeMetadata,
@@ -291,6 +303,7 @@ export function buildFullLineageTree(
 				child,
 				1,
 				remainingGenerations,
+				engine,
 				graph,
 				{ detectCycles, includeMetadata, filter, metadataProvider }
 			);

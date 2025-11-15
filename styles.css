@@ -37,11 +37,15 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 16px;
-	height: 16px;
+	width: 24px;
+	height: 24px;
+	padding: 4px;
 	color: var(--text-muted);
 	transition: transform 0.15s ease;
 	flex-shrink: 0;
+	pointer-events: auto;
+	z-index: 1;
+	position: relative;
 }
 
 .relation-tree-toggle:hover {
@@ -56,9 +60,9 @@
 
 /* Toggle Spacer (when no toggle needed) */
 .relation-tree-toggle-spacer {
-	width: 16px;
-	height: 16px;
-	flex-shrink: 0;
+  width: 24px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 /* File Icon */
@@ -67,6 +71,7 @@
 	align-items: center;
 	color: var(--text-muted);
 	flex-shrink: 0;
+	pointer-events: none;
 }
 
 /* File Name */
@@ -82,6 +87,7 @@
 .relation-tree-name-clickable {
 	cursor: pointer;
 	color: var(--text-accent);
+	pointer-events: auto;
 }
 
 .relation-tree-name-clickable:hover {
@@ -172,4 +178,100 @@
 		color: var(--text-normal);
 		text-decoration: none;
 	}
+}
+
+/* ============================================
+   Relation Sidebar Styles
+   ============================================ */
+
+/* Sidebar Container */
+.relation-sidebar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+}
+
+/* Sidebar Header */
+.relation-sidebar-header {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.relation-sidebar-title {
+  font-weight: 600;
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+/* Sidebar Content */
+.relation-sidebar-content {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 8px;
+	pointer-events: none;
+}
+
+/* Empty State */
+.relation-sidebar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+}
+
+.relation-sidebar-empty-text {
+  font-size: var(--font-ui-medium);
+  margin-bottom: 8px;
+  color: var(--text-normal);
+}
+
+.relation-sidebar-empty-hint {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+
+/* Error State */
+.relation-sidebar-error {
+  padding: 16px;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-error);
+  border-radius: 4px;
+  margin: 8px;
+}
+
+.relation-sidebar-error-text {
+  color: var(--text-error);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.relation-sidebar-error-details {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-family: var(--font-monospace);
+}
+
+/* Scrollbar styling for sidebar */
+.relation-sidebar-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.relation-sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.relation-sidebar-content::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 5px;
+}
+
+.relation-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: var(--background-modifier-border-hover);
 }

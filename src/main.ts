@@ -2,6 +2,7 @@ import { App, Plugin, PluginSettingTab, Setting, TFile, TAbstractFile } from 'ob
 import { RelationGraph } from './relation-graph';
 import { RelationshipEngine } from './relationship-engine';
 import { DiagnosticSeverity } from './graph-validator';
+import { VIEW_TYPE_RELATION_SIDEBAR, RelationSidebarView } from './sidebar-view';
 import {
   AncestorQueryResult,
   DescendantQueryResult,
@@ -36,10 +37,49 @@ export default class ParentRelationPlugin extends Plugin {
       this.settings.parentField,
       this.settings.maxDepth
     );
-    this.relationGraph.build();
+
+    // Wait for metadata cache to be ready before building graph
+    if (this.app.workspace.layoutReady) {
+      // If workspace is already ready, build immediately
+      this.relationGraph.build();
+    } else {
+      // Otherwise, wait for layout-ready event
+      this.app.workspace.onLayoutReady(() => {
+        this.relationGraph.build();
+      });
+    }
 
     // Initialize relationship engine
     this.relationshipEngine = new RelationshipEngine(this.relationGraph);
+
+    // Register sidebar view
+    this.registerView(
+      VIEW_TYPE_RELATION_SIDEBAR,
+      (leaf) => new RelationSidebarView(leaf, this)
+    );
+
+    // Add ribbon icon to toggle sidebar
+    this.addRibbonIcon('git-fork', 'Toggle Relation Explorer', async () => {
+      await this.toggleSidebar();
+    });
+
+    // Add command to open sidebar
+    this.addCommand({
+      id: 'open-relation-sidebar',
+      name: 'Open Relation Explorer',
+      callback: async () => {
+        await this.activateSidebar();
+      }
+    });
+
+    // Add command to toggle sidebar
+    this.addCommand({
+      id: 'toggle-relation-sidebar',
+      name: 'Toggle Relation Explorer',
+      callback: async () => {
+        await this.toggleSidebar();
+      }
+    });
 
     this.addSettingTab(new ParentRelationSettingTab(this.app, this));
 
@@ -79,6 +119,9 @@ export default class ParentRelationPlugin extends Plugin {
   }
 
   onunload() {
+    // Detach sidebar views
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_RELATION_SIDEBAR);
+    
     console.log('Parent Relation Explorer unloaded');
   }
 
@@ -90,6 +133,15 @@ export default class ParentRelationPlugin extends Plugin {
     await this.saveData(this.settings);
     // Update maxDepth in graph when settings change
     this.relationGraph.setMaxDepth(this.settings.maxDepth);
+  }
+
+  /**
+   * Refreshes all open sidebar views.
+   */
+  refreshSidebarViews(): void {
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATION_SIDEBAR).forEach(leaf => {
+      (leaf.view as RelationSidebarView).refresh();
+    });
   }
 
   /**
@@ -428,8 +480,55 @@ export default class ParentRelationPlugin extends Plugin {
    *   console.warn('Graph contains cycles');
    * }
    */
-  hasCycles(): boolean {
-    return this.relationGraph.hasCycles();
+  supportsCycleDetection(): boolean {
+    return this.relationGraph.supportsCycleDetection();
+  }
+
+  // ========================================
+  // Sidebar View Management
+  // ========================================
+
+  /**
+   * Activates the sidebar view (opens if not already open).
+   */
+  async activateSidebar(): Promise<void> {
+    const { workspace } = this.app;
+
+    // Check if view is already open
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_RELATION_SIDEBAR)[0];
+
+    if (!leaf) {
+      // Create new leaf in right sidebar
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        await rightLeaf.setViewState({
+          type: VIEW_TYPE_RELATION_SIDEBAR,
+          active: true
+        });
+        leaf = rightLeaf;
+      }
+    }
+
+    // Reveal the leaf
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  /**
+   * Toggles the sidebar view (open/close).
+   */
+  async toggleSidebar(): Promise<void> {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType(VIEW_TYPE_RELATION_SIDEBAR);
+
+    if (leaves.length > 0) {
+      // Close all sidebar views
+      leaves.forEach(leaf => leaf.detach());
+    } else {
+      // Open sidebar
+      await this.activateSidebar();
+    }
   }
 }
 
@@ -465,6 +564,8 @@ class ParentRelationSettingTab extends PluginSettingTab {
           this.plugin.relationGraph.build();
           // Reinitialize relationship engine
           this.plugin.relationshipEngine = new RelationshipEngine(this.plugin.relationGraph);
+          // Refresh sidebar views
+          this.plugin.refreshSidebarViews();
         })
       );
 
@@ -479,6 +580,8 @@ class ParentRelationSettingTab extends PluginSettingTab {
           if (!isNaN(num)) {
             this.plugin.settings.maxDepth = num;
             await this.plugin.saveSettings();
+            // Refresh sidebar views
+            this.plugin.refreshSidebarViews();
           }
         })
       );
