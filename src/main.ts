@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, TAbstractFile } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, TAbstractFile, Notice } from 'obsidian';
 import { RelationGraph } from './relation-graph';
 import { RelationshipEngine } from './relationship-engine';
 import { DiagnosticSeverity } from './graph-validator';
@@ -701,34 +701,65 @@ class ParentRelationSettingTab extends PluginSettingTab {
 
     containerEl.createEl('h2', { text: 'Parent Relation Explorer Settings' });
 
-    // TODO: Phase 3 will implement proper multi-field settings UI
-    // For now, show a simplified version
+    // Parent Fields (comma-separated list)
     new Setting(containerEl)
-      .setName('Parent Field (First Field)')
-      .setDesc('Frontmatter field name for parent links (multi-field support in progress)')
-      .addText(text => text
-        .setPlaceholder('parent')
-        .setValue(this.plugin.settings.parentFields[0]?.name || 'parent')
-        .onChange(async value => {
-          if (this.plugin.settings.parentFields.length > 0) {
-            this.plugin.settings.parentFields[0].name = value;
+      .setName('Parent Fields')
+      .setDesc('Comma-separated list of frontmatter fields to track (e.g., "parent, project, category")')
+      .addText(text => {
+        const fieldNames = this.plugin.settings.parentFields.map(f => f.name).join(', ');
+
+        text
+          .setPlaceholder('parent, project, category')
+          .setValue(fieldNames)
+          .onChange(async value => {
+            await this.handleParentFieldsChange(value);
+          });
+      });
+
+    // Default Parent Field
+    new Setting(containerEl)
+      .setName('Default Parent Field')
+      .setDesc('Which parent field to show by default when opening the sidebar')
+      .addDropdown(dropdown => {
+        this.plugin.settings.parentFields.forEach(field => {
+          dropdown.addOption(field.name, field.displayName || field.name);
+        });
+
+        dropdown
+          .setValue(this.plugin.settings.defaultParentField)
+          .onChange(async value => {
             this.plugin.settings.defaultParentField = value;
             await this.plugin.saveSettings();
-            // TODO: Rebuild graphs - will be implemented in Phase 2/3
-            this.plugin.refreshSidebarViews();
-          }
-        })
-      );
+          });
+      });
 
+    // UI Style
+    new Setting(containerEl)
+      .setName('UI Style')
+      .setDesc('How to display parent field selector (Auto = segmented control for ≤4 fields, dropdown for >4)')
+      .addDropdown(dropdown => {
+        dropdown
+          .addOption('auto', 'Auto')
+          .addOption('segmented', 'Segmented Control')
+          .addOption('dropdown', 'Dropdown')
+          .setValue(this.plugin.settings.uiStyle)
+          .onChange(async value => {
+            this.plugin.settings.uiStyle = value as 'auto' | 'segmented' | 'dropdown';
+            await this.plugin.saveSettings();
+            this.plugin.refreshSidebarViews();
+          });
+      });
+
+    // Max Depth (global for now, per-field in Milestone 4.2B)
     new Setting(containerEl)
       .setName('Max Depth')
-      .setDesc('Maximum depth for tree traversal (applies to all fields)')
+      .setDesc('Maximum depth for tree traversal (applies to all parent fields)')
       .addText(text => text
         .setPlaceholder('5')
         .setValue(this.plugin.settings.parentFields[0]?.ancestors.maxDepth?.toString() || '5')
         .onChange(async value => {
           const num = parseInt(value);
-          if (!isNaN(num)) {
+          if (!isNaN(num) && num > 0) {
             // Update all field configs
             this.plugin.settings.parentFields.forEach(field => {
               field.ancestors.maxDepth = num;
@@ -740,24 +771,108 @@ class ParentRelationSettingTab extends PluginSettingTab {
         })
       );
 
+    // Diagnostic Mode
     new Setting(containerEl)
       .setName('Diagnostic Mode')
-      .setDesc('Enable verbose logging for graph validation and diagnostics. Useful for troubleshooting.')
+      .setDesc('Enable verbose logging for graph validation and diagnostics')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.diagnosticMode)
         .onChange(async (value) => {
           this.plugin.settings.diagnosticMode = value;
           await this.plugin.saveSettings();
 
-          // Log status change
           if (value) {
             console.log('[Relations] Diagnostic mode enabled');
-            // Run initial validation on all graphs
             this.plugin.runDiagnostics();
           } else {
             console.log('[Relations] Diagnostic mode disabled');
           }
         })
       );
+  }
+
+  /**
+   * Handles changes to parent fields list.
+   */
+  private async handleParentFieldsChange(value: string): Promise<void> {
+    const fieldNames = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    if (fieldNames.length === 0) {
+      // Require at least one field
+      new Notice('At least one parent field is required');
+      return;
+    }
+
+    // Create new field configs
+    const newFields: ParentFieldConfig[] = fieldNames.map(name => {
+      // Try to preserve existing config if field already exists
+      const existingField = this.plugin.settings.parentFields.find(f => f.name === name);
+
+      if (existingField) {
+        return existingField;
+      }
+
+      // Create new field with defaults
+      return {
+        name,
+        displayName: name.charAt(0).toUpperCase() + name.slice(1),
+        ancestors: {
+          displayName: 'Ancestors',
+          visible: true,
+          collapsed: false,
+          maxDepth: 5,
+          initialDepth: 2
+        },
+        descendants: {
+          displayName: 'Descendants',
+          visible: true,
+          collapsed: false,
+          maxDepth: 5,
+          initialDepth: 2
+        },
+        siblings: {
+          displayName: 'Siblings',
+          visible: true,
+          collapsed: false,
+          sortOrder: 'alphabetical' as const,
+          includeSelf: false
+        }
+      };
+    });
+
+    this.plugin.settings.parentFields = newFields;
+
+    // Ensure default field is valid
+    if (!fieldNames.includes(this.plugin.settings.defaultParentField)) {
+      this.plugin.settings.defaultParentField = fieldNames[0];
+    }
+
+    await this.plugin.saveSettings();
+
+    // Rebuild graphs and engines
+    this.plugin.relationGraphs.clear();
+    this.plugin.relationshipEngines.clear();
+
+    this.plugin.settings.parentFields.forEach(fieldConfig => {
+      const graph = new RelationGraph(
+        this.app,
+        fieldConfig.name,
+        fieldConfig.ancestors.maxDepth ?? 5,
+        this.plugin.frontmatterCache
+      );
+
+      const engine = new RelationshipEngine(graph);
+
+      this.plugin.relationGraphs.set(fieldConfig.name, graph);
+      this.plugin.relationshipEngines.set(fieldConfig.name, engine);
+
+      graph.build();
+    });
+
+    // Refresh sidebar
+    this.plugin.refreshSidebarViews();
+
+    // Re-render settings to update dropdown
+    this.display();
   }
 }
