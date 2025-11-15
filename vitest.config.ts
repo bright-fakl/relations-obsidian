@@ -5,10 +5,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    pool: 'forks',
     include: ['tests/**/*.test.ts'],
     exclude: ['node_modules', 'tests/integration/**'],
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/**',
