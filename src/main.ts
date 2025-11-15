@@ -1,5 +1,6 @@
 import { App, Plugin, PluginSettingTab, Setting, TFile, TAbstractFile } from 'obsidian';
 import { RelationGraph } from './relation-graph';
+import { RelationshipEngine } from './relationship-engine';
 import { DiagnosticSeverity } from './graph-validator';
 
 interface ParentRelationSettings {
@@ -17,12 +18,20 @@ const DEFAULT_SETTINGS: ParentRelationSettings = {
 export default class ParentRelationPlugin extends Plugin {
   settings!: ParentRelationSettings;
   relationGraph!: RelationGraph;
+  relationshipEngine!: RelationshipEngine;
 
   async onload() {
     await this.loadSettings();
 
-    this.relationGraph = new RelationGraph(this.app, this.settings.parentField);
+    this.relationGraph = new RelationGraph(
+      this.app,
+      this.settings.parentField,
+      this.settings.maxDepth
+    );
     this.relationGraph.build();
+
+    // Initialize relationship engine
+    this.relationshipEngine = new RelationshipEngine(this.relationGraph);
 
     this.addSettingTab(new ParentRelationSettingTab(this.app, this));
 
@@ -71,6 +80,8 @@ export default class ParentRelationPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+    // Update maxDepth in graph when settings change
+    this.relationGraph.setMaxDepth(this.settings.maxDepth);
   }
 
   /**
@@ -159,8 +170,14 @@ class ParentRelationSettingTab extends PluginSettingTab {
           this.plugin.settings.parentField = value;
           await this.plugin.saveSettings();
           // Recreate graph with new parent field
-          this.plugin.relationGraph = new RelationGraph(this.app, value);
+          this.plugin.relationGraph = new RelationGraph(
+            this.app,
+            value,
+            this.plugin.settings.maxDepth
+          );
           this.plugin.relationGraph.build();
+          // Reinitialize relationship engine
+          this.plugin.relationshipEngine = new RelationshipEngine(this.plugin.relationGraph);
         })
       );
 
