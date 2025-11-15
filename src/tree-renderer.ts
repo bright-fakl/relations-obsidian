@@ -133,6 +133,7 @@ export class TreeRenderer {
 		const nameEl = document.createElement('span');
 		nameEl.classList.add(`${this.options.cssPrefix}-name`);
 		nameEl.textContent = node.file.basename;
+		console.log('[Tree Renderer] Rendering node:', node.file.basename, 'path:', node.file.path);
 
 		if (this.options.enableNavigation) {
 			nameEl.classList.add(`${this.options.cssPrefix}-name-clickable`);
@@ -193,10 +194,8 @@ export class TreeRenderer {
 	private addCollapseToggle(element: HTMLElement, node: TreeNode): void {
 		const toggle = document.createElement('span');
 		toggle.classList.add(`${this.options.cssPrefix}-toggle`);
-		toggle.setAttribute('role', 'button');
-		toggle.setAttribute('aria-label', 'Toggle children');
-		toggle.setAttribute('aria-expanded', String(!this.options.initiallyCollapsed));
-		toggle.setAttribute('tabindex', '0');
+		toggle.setAttribute('data-file-path', node.file.path);
+		toggle.setAttribute('title', `Toggle ${node.file.basename} children`);
 
 		// Set initial icon
 		this.updateToggleIcon(toggle, this.options.initiallyCollapsed);
@@ -204,6 +203,7 @@ export class TreeRenderer {
 		// Click handler
 		toggle.addEventListener('click', (e) => {
 			e.stopPropagation();
+			e.preventDefault();
 			this.toggleNode(node.file.path, toggle);
 		});
 
@@ -226,22 +226,22 @@ export class TreeRenderer {
 	 * @param toggleElement - Toggle button element
 	 */
 	private toggleNode(filePath: string, toggleElement: HTMLElement): void {
-		const state = this.nodeStates.get(filePath);
-		if (!state) return;
+	  const state = this.nodeStates.get(filePath);
+	  if (!state) return;
 
-		// Toggle state
-		state.collapsed = !state.collapsed;
+	  // Toggle state
+	  state.collapsed = !state.collapsed;
 
-		// Update DOM
-		if (state.collapsed) {
-			state.element.classList.add(`${this.options.cssPrefix}-collapsed`);
-		} else {
-			state.element.classList.remove(`${this.options.cssPrefix}-collapsed`);
-		}
+	  // Update DOM
+	  if (state.collapsed) {
+	    state.element.classList.add(`${this.options.cssPrefix}-collapsed`);
+	  } else {
+	    state.element.classList.remove(`${this.options.cssPrefix}-collapsed`);
+	  }
 
-		// Update toggle icon and aria
-		this.updateToggleIcon(toggleElement, state.collapsed);
-		toggleElement.setAttribute('aria-expanded', String(!state.collapsed));
+	  // Update toggle icon and aria
+	  this.updateToggleIcon(toggleElement, state.collapsed);
+	  toggleElement.setAttribute('aria-expanded', String(!state.collapsed));
 	}
 
 	/**
@@ -251,10 +251,39 @@ export class TreeRenderer {
 	 * @param collapsed - Whether node is collapsed
 	 */
 	private updateToggleIcon(toggleElement: HTMLElement, collapsed: boolean): void {
-		// Use Lucide icons that Obsidian provides
-		toggleElement.innerHTML = collapsed
-			? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>'
-			: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+		// Clear existing content
+		toggleElement.innerHTML = '';
+
+		// Create SVG element
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		svg.setAttribute('width', '16');
+		svg.setAttribute('height', '16');
+		svg.setAttribute('viewBox', '0 0 24 24');
+		svg.setAttribute('fill', 'none');
+		svg.setAttribute('stroke', 'currentColor');
+		svg.setAttribute('stroke-width', '2');
+		svg.setAttribute('stroke-linecap', 'round');
+		svg.setAttribute('stroke-linejoin', 'round');
+
+		// Create polyline
+		const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+		polyline.setAttribute('points', collapsed ? '9 18 15 12 9 6' : '6 9 12 15 18 9');
+
+		// Add click handler to SVG
+		svg.addEventListener('click', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+			const filePath = toggleElement.getAttribute('data-file-path');
+			if (filePath) {
+				this.toggleNode(filePath, toggleElement);
+			}
+		});
+
+		// Append polyline to SVG
+		svg.appendChild(polyline);
+
+		// Append SVG to toggle
+		toggleElement.appendChild(svg);
 	}
 
 	/**
@@ -266,15 +295,16 @@ export class TreeRenderer {
 	private addNavigationHandler(element: HTMLElement, file: TFile): void {
 		element.addEventListener('click', async (e) => {
 			e.preventDefault();
+			e.stopPropagation();
 
 			// Check for modifier keys for different open modes
 			const newLeaf = e.ctrlKey || e.metaKey;
 
-			await this.app.workspace.openLinkText(
-				file.path,
-				'',
-				newLeaf ? 'split' : false
-			);
+			if (newLeaf) {
+				await this.app.workspace.openLinkText(file.basename, '', 'split');
+			} else {
+				await this.app.workspace.getLeaf().openFile(file);
+			}
 		});
 
 		// Add hover effect
@@ -284,7 +314,7 @@ export class TreeRenderer {
 				source: 'relation-tree',
 				hoverParent: element,
 				targetEl: element,
-				linktext: file.path,
+				linktext: file.basename,
 			});
 		});
 	}

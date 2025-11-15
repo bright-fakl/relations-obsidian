@@ -20,13 +20,19 @@ export class RelationGraph {
 
   build() {
     const files = this.app.vault.getMarkdownFiles();
+    console.log(`[RelationGraph] Building graph from ${files.length} markdown files`);
     this.graph.clear();
 
     files.forEach(file => {
       const meta = this.app.metadataCache.getFileCache(file);
-      const parentLinks = this.extractParentLinks(meta);
+      if (!meta) {
+        console.warn(`[RelationGraph] No metadata cache for ${file.path} - cache not ready yet`);
+      }
+      const parentLinks = this.extractParentLinks(meta, file);
       this.graph.set(file.path, { file, parents: parentLinks, children: [] });
     });
+
+    console.log(`[RelationGraph] Graph built with ${this.graph.size} nodes`);
 
     for (const node of this.graph.values()) {
       node.parents.forEach(parent => {
@@ -34,20 +40,24 @@ export class RelationGraph {
       });
     }
 
+
     // Initialize cycle detector and validator after graph is built
     this.cycleDetector = new CycleDetector(this);
     this.graphValidator = new GraphValidator(this, this.cycleDetector);
   }
 
-  extractParentLinks(meta: any): TFile[] {
+  extractParentLinks(meta: any, file: TFile): TFile[] {
     const field = meta?.frontmatter?.[this.parentField];
     if (!field) return [];
     const arr = Array.isArray(field) ? field : [field];
-    return arr.map(ref => this.resolveLink(ref, meta)).filter(Boolean) as TFile[];
+    return arr.map(ref => this.resolveLink(ref, file.path)).filter(Boolean) as TFile[];
   }
 
-  resolveLink(ref: string, meta: any): TFile | null {
-    return this.app.metadataCache.getFirstLinkpathDest(ref, meta?.path) || null;
+  resolveLink(ref: string, sourcePath: string): TFile | null {
+    // Frontmatter values may include wiki-link brackets [[like this]]
+    // getFirstLinkpathDest expects the link text without brackets
+    const cleanRef = ref.replace(/[\[\]]/g, '');
+    return this.app.metadataCache.getFirstLinkpathDest(cleanRef, sourcePath) || null;
   }
 
   getParents(file: TFile): TFile[] {
@@ -103,6 +113,10 @@ export class RelationGraph {
    * @returns CycleInfo if a cycle is found, null otherwise
    */
   detectCycle(file: TFile): CycleInfo | null {
+    if (!this.cycleDetector) {
+      this.cycleDetector = new CycleDetector(this);
+      this.graphValidator = new GraphValidator(this, this.cycleDetector);
+    }
     return this.cycleDetector.detectCycle(file);
   }
 
@@ -121,8 +135,8 @@ export class RelationGraph {
    *
    * @returns true if any cycle exists in the graph
    */
-  hasCycles(): boolean {
-    return this.cycleDetector.hasCycles();
+  supportsCycleDetection(): boolean {
+    return !!this.cycleDetector;
   }
 
   /**
@@ -133,7 +147,7 @@ export class RelationGraph {
    */
   updateNode(file: TFile): void {
     const meta = this.app.metadataCache.getFileCache(file);
-    const newParents = this.extractParentLinks(meta);
+    const newParents = this.extractParentLinks(meta, file);
 
     const existingNode = this.graph.get(file.path);
 
@@ -225,41 +239,45 @@ export class RelationGraph {
    * @param oldPath - The old file path
    */
   renameNode(file: TFile, oldPath: string): void {
-    const node = this.graph.get(oldPath);
-    if (!node) return;
-
-    // Update node's file reference
-    node.file = file;
-
-    // Move to new key in map
-    this.graph.delete(oldPath);
-    this.graph.set(file.path, node);
-
-    // Update parent references in children
-    node.children.forEach(child => {
-      const childNode = this.graph.get(child.path);
-      if (childNode) {
-        const parentIndex = childNode.parents.findIndex(p => p.path === oldPath);
-        if (parentIndex >= 0) {
-          childNode.parents[parentIndex] = file;
-        }
-      }
-    });
-
-    // Update child references in parents
-    node.parents.forEach(parent => {
-      const parentNode = this.graph.get(parent.path);
-      if (parentNode) {
-        const childIndex = parentNode.children.findIndex(c => c.path === oldPath);
-        if (childIndex >= 0) {
-          parentNode.children[childIndex] = file;
-        }
-      }
-    });
-
-    // Rebuild cycle detector and validator
-    this.cycleDetector = new CycleDetector(this);
-    this.graphValidator = new GraphValidator(this, this.cycleDetector);
+  	console.log('[Relation Graph] renameNode called:', oldPath, '->', file.path, 'basename:', file.basename);
+  	const node = this.graph.get(oldPath);
+  	if (!node) {
+  		console.log('[Relation Graph] No node found for oldPath:', oldPath);
+  		return;
+  	}
+ 
+  	// Update node's file reference
+  	node.file = file;
+ 
+  	// Move to new key in map
+  	this.graph.delete(oldPath);
+  	this.graph.set(file.path, node);
+ 
+  	// Update parent references in children
+  	node.children.forEach(child => {
+  		const childNode = this.graph.get(child.path);
+  		if (childNode) {
+  			const parentIndex = childNode.parents.findIndex(p => p.path === oldPath);
+  			if (parentIndex >= 0) {
+  				childNode.parents[parentIndex] = file;
+  			}
+  		}
+  	});
+ 
+  	// Update child references in parents
+  	node.parents.forEach(parent => {
+  		const parentNode = this.graph.get(parent.path);
+  		if (parentNode) {
+  			const childIndex = parentNode.children.findIndex(c => c.path === oldPath);
+  			if (childIndex >= 0) {
+  				parentNode.children[childIndex] = file;
+  			}
+  		}
+  	});
+ 
+  	// Rebuild cycle detector and validator
+  	this.cycleDetector = new CycleDetector(this);
+  	this.graphValidator = new GraphValidator(this, this.cycleDetector);
   }
 
   /**
