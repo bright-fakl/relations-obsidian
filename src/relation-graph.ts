@@ -1,4 +1,5 @@
 import { App, TFile } from 'obsidian';
+import { CycleDetector, CycleInfo } from './cycle-detector';
 
 export interface NodeInfo {
   file: TFile;
@@ -8,6 +9,8 @@ export interface NodeInfo {
 
 export class RelationGraph {
   private graph = new Map<string, NodeInfo>();
+  private cycleDetector!: CycleDetector;
+  
   constructor(private app: App, private parentField: string) {}
 
   build() {
@@ -25,6 +28,9 @@ export class RelationGraph {
         this.graph.get(parent.path)?.children.push(node.file);
       });
     }
+
+    // Initialize cycle detector after graph is built
+    this.cycleDetector = new CycleDetector(this);
   }
 
   extractParentLinks(meta: any): TFile[] {
@@ -44,5 +50,43 @@ export class RelationGraph {
 
   getChildren(file: TFile): TFile[] {
     return this.graph.get(file.path)?.children || [];
+  }
+
+  /**
+   * Gets all files in the graph.
+   *
+   * @returns Array of all TFile objects in the graph
+   */
+  getAllFiles(): TFile[] {
+    return Array.from(this.graph.values()).map(node => node.file);
+  }
+
+  /**
+   * Detects if there is a cycle involving the specified file.
+   *
+   * @param file - The file to check for cycles
+   * @returns CycleInfo if a cycle is found, null otherwise
+   */
+  detectCycle(file: TFile): CycleInfo | null {
+    return this.cycleDetector.detectCycle(file);
+  }
+
+  /**
+   * Gets detailed information about a cycle involving the specified file.
+   *
+   * @param file - The file to check
+   * @returns CycleInfo with cycle path details, or null if no cycle
+   */
+  getCycleInfo(file: TFile): CycleInfo | null {
+    return this.cycleDetector.getCycleInfo(file);
+  }
+
+  /**
+   * Checks if the graph contains any cycles.
+   *
+   * @returns true if any cycle exists in the graph
+   */
+  hasCycles(): boolean {
+    return this.cycleDetector.hasCycles();
   }
 }

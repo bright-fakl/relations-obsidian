@@ -6,6 +6,7 @@ An Obsidian plugin for visualizing parent-child relationships between notes base
 
 - **Flexible Relationship Tracking**: Define custom frontmatter fields to establish parent-child relationships between notes
 - **Automatic Graph Building**: Automatically builds and maintains a relationship graph as you create and modify notes
+- **Cycle Detection**: Detects and reports circular relationships to prevent infinite traversals
 - **Configurable Settings**: Customize the parent field name and maximum traversal depth
 
 ## Installation
@@ -52,7 +53,31 @@ The plugin:
 1. Scans all markdown files in your vault
 2. Extracts parent relationships from the configured frontmatter field
 3. Builds a bidirectional graph of parent-child relationships
-4. Automatically updates the graph when notes are modified or renamed
+4. Detects cycles in the relationship graph
+5. Automatically updates the graph when notes are modified or renamed
+
+### Cycle Detection
+
+The plugin includes built-in cycle detection to identify circular parent-child relationships. Cycles occur when a note is its own ancestor through a chain of parent relationships (e.g., Note A → Note B → Note C → Note A).
+
+**API Methods:**
+
+```typescript
+// Check if a specific file has a cycle
+const cycleInfo = plugin.relationGraph.detectCycle(file);
+if (cycleInfo) {
+  console.log(cycleInfo.description); // e.g., "Cycle detected: A → B → C → A"
+  console.log(cycleInfo.cyclePath);   // Array of files in the cycle
+  console.log(cycleInfo.length);      // Number of unique nodes in cycle
+}
+
+// Check if the entire graph has any cycles
+if (plugin.relationGraph.hasCycles()) {
+  console.log('Warning: Graph contains cycles');
+}
+```
+
+The cycle detector uses a three-color depth-first search algorithm to efficiently detect cycles while preserving the user-defined graph structure.
 
 ## Development
 
@@ -73,8 +98,24 @@ npm run dev
 
 - `src/main.ts` - Main plugin entry point and settings
 - `src/relation-graph.ts` - Core relationship graph logic
+- `src/cycle-detector.ts` - Cycle detection implementation
+- `tests/` - Test suite (Vitest)
+- `docs/` - Implementation plans and documentation
 - `manifest.json` - Plugin manifest
 - `rollup.config.mjs` - Build configuration
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI
+npm run test:ui
+```
 
 ## License
 
