@@ -57,6 +57,7 @@ export class RelationSidebarView extends ItemView {
 	private currentFile: TFile | null = null;
 	private viewState: SidebarViewState;
 	private contentContainer!: HTMLElement;
+	private headerContainer!: HTMLElement;
 	private fieldSelector: ParentFieldSelector | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: ParentRelationPlugin) {
@@ -103,8 +104,9 @@ export class RelationSidebarView extends ItemView {
 		container.empty();
 		container.addClass('relation-sidebar-container');
 
-		// Create header
-		this.createHeader(container);
+		// Create header container
+		this.headerContainer = container.createDiv('relation-sidebar-header-wrapper');
+		this.createHeader();
 
 		// Create content container
 		this.contentContainer = container.createDiv('relation-sidebar-content');
@@ -145,8 +147,17 @@ export class RelationSidebarView extends ItemView {
 	/**
 	 * Creates the header section with title and controls.
 	 */
-	private createHeader(container: HTMLElement): void {
-		const header = container.createDiv('relation-sidebar-header');
+	private createHeader(): void {
+		// Clear existing header
+		this.headerContainer.empty();
+
+		// Cleanup existing field selector
+		if (this.fieldSelector) {
+			this.fieldSelector.destroy();
+			this.fieldSelector = null;
+		}
+
+		const header = this.headerContainer.createDiv('relation-sidebar-header');
 
 		// Title
 		const title = header.createDiv('relation-sidebar-title');
@@ -260,6 +271,17 @@ export class RelationSidebarView extends ItemView {
 	 */
 	private updateView(): void {
 		console.log('[Relation Sidebar] updateView called, currentFile:', this.currentFile?.basename);
+
+		// Validate that selected field still exists
+		const fieldExists = this.plugin.settings.parentFields.some(
+			f => f.name === this.viewState.selectedParentField
+		);
+
+		if (!fieldExists) {
+			// Fall back to default field
+			this.viewState.selectedParentField = this.plugin.settings.defaultParentField;
+		}
+
 		// Clear content
 		this.contentContainer.empty();
 
@@ -684,9 +706,33 @@ export class RelationSidebarView extends ItemView {
 	}
 
 	/**
+	 * Updates the field selector with current settings.
+	 */
+	private updateFieldSelector(): void {
+		const hadMultipleFields = this.fieldSelector !== null;
+		const hasMultipleFields = this.plugin.settings.parentFields.length > 1;
+
+		// If field count changed (1 <-> multiple), recreate header
+		if (hadMultipleFields !== hasMultipleFields) {
+			this.createHeader();
+			return;
+		}
+
+		// Otherwise just update the existing selector
+		if (this.fieldSelector) {
+			this.fieldSelector.update({
+				fields: this.plugin.settings.parentFields,
+				selectedField: this.viewState.selectedParentField,
+				uiStyle: this.plugin.settings.uiStyle
+			});
+		}
+	}
+
+	/**
 	 * Refreshes the view (forces re-render).
 	 */
 	refresh(): void {
+		this.updateFieldSelector();
 		this.updateView();
 	}
 
