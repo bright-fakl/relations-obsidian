@@ -24,6 +24,19 @@ An Obsidian plugin for visualizing parent-child relationships between notes base
 - **Preset Configurations**: Quick setup with 5 built-in presets for common workflows
 - **Visual Configuration Editor**: Manage settings through an intuitive collapsible form interface
 
+### Advanced Context Menu (Milestone 4.3B)
+- **Relationship Modification**: Add or remove parent-child relationships directly from the tree
+  - Set/Remove as Parent (or Ancestor)
+  - Set/Remove as Child (or Descendant)
+- **Smart Section Logic**: Context menu adapts based on section and current relationships
+- **Tree Manipulation**: Expand or collapse entire subtrees with one click
+- **Command Palette Integration**: Access actions via keyboard shortcuts
+- **Confirmation Dialogs**: Prevent accidental changes with confirmation prompts
+- **Undo Support**: All relationship changes support undo/redo (Ctrl/Cmd+Z)
+- **Custom Labels**: Uses your display names for parent fields and sections
+
+📖 **[Read the full Advanced Context Menu Guide](docs/ADVANCED-CONTEXT-MENU-GUIDE.md)**
+
 ## Installation
 
 ### Manual Installation
