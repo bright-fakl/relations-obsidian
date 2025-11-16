@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CycleDetector, CycleInfo } from '@/cycle-detector';
 import { RelationGraph, NodeInfo } from '@/relation-graph';
+import { FrontmatterCache } from '@/frontmatter-cache';
 import { TFile, App } from 'obsidian';
 
 /**
@@ -32,7 +33,8 @@ function createMockGraph(edges: [string, string][]): RelationGraph {
     },
   } as any;
 
-  const graph = new RelationGraph(mockApp, 'parent');
+  const frontmatterCache = new FrontmatterCache(mockApp);
+  const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
   
   // Build file map
   const fileMap = new Map<string, TFile>();
@@ -232,7 +234,8 @@ describe('CycleDetector', () => {
         metadataCache: { getFileCache: vi.fn(), getFirstLinkpathDest: vi.fn() },
       } as any;
       
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+  const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       const fileA = createMockFile('A', 'A');
       
       // Manually add single node with no parents

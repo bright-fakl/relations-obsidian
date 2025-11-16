@@ -18,6 +18,7 @@ import {
 } from '@/tree-model';
 import { RelationshipEngine } from '@/relationship-engine';
 import { RelationGraph } from '@/relation-graph';
+import { FrontmatterCache } from '@/frontmatter-cache';
 import { TFile, App, CachedMetadata } from 'obsidian';
 
 /**
@@ -85,7 +86,8 @@ function createMockGraph(
 	});
 
 	// Create graph
-	const graph = new RelationGraph(app, 'parent', 10);
+	const frontmatterCache = new FrontmatterCache(app);
+	const graph = new RelationGraph(app, 'parent', 10, frontmatterCache);
 
 	// Mock getParents and getChildren
 	graph.getParents = vi.fn((file: TFile) => {

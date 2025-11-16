@@ -32,15 +32,42 @@ describe.skip('Plugin API Integration Tests', () => {
       description: 'Test plugin'
     } as any);
 
-    // Initialize plugin with default settings
+    // Initialize plugin with default settings (new multi-field structure)
     plugin.settings = {
-      parentField: 'parent',
-      maxDepth: 5,
+      parentFields: [
+        {
+          name: 'parent',
+          displayName: 'Parent',
+          ancestors: {
+            displayName: 'Ancestors',
+            visible: true,
+            collapsed: false,
+            maxDepth: 5,
+            initialDepth: 2
+          },
+          descendants: {
+            displayName: 'Descendants',
+            visible: true,
+            collapsed: false,
+            maxDepth: 5,
+            initialDepth: 2
+          },
+          siblings: {
+            displayName: 'Siblings',
+            visible: true,
+            collapsed: false,
+            sortOrder: 'alphabetical' as const,
+            includeSelf: false
+          }
+        }
+      ],
+      defaultParentField: 'parent',
+      uiStyle: 'auto' as const,
       diagnosticMode: false
     };
 
-    // Build graph
-    plugin.relationGraph.build();
+    // Build all graphs
+    plugin.buildAllGraphs();
   });
 
   describe('Ancestor Queries', () => {
