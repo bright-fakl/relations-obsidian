@@ -417,19 +417,38 @@ export class RelationSidebarView extends ItemView {
 	 */
 	private renderReferenceNote(file: TFile): void {
 		const referenceContainer = this.contentContainer.createDiv('relation-reference-note');
+		// Flex container for horizontal layout
+		referenceContainer.style.display = 'flex';
+		referenceContainer.style.alignItems = 'center';
+		referenceContainer.style.justifyContent = 'space-between';
+		referenceContainer.style.padding = '8px 12px';
+		referenceContainer.style.marginBottom = '8px';
+		referenceContainer.style.backgroundColor = 'var(--background-secondary)';
+		referenceContainer.style.borderRadius = '6px';
 
 		const nameContainer = referenceContainer.createDiv('relation-reference-note-content');
+		nameContainer.style.display = 'flex';
+		nameContainer.style.alignItems = 'center';
+		nameContainer.style.gap = '8px';
 
 		// File icon
 		const icon = nameContainer.createDiv('relation-reference-note-icon');
+		icon.style.display = 'flex';
+		icon.style.alignItems = 'center';
+		icon.style.opacity = '0.7';
 		setIcon(icon, 'file');
 
 		// File name
 		const name = nameContainer.createDiv('relation-reference-note-name');
 		name.setText(file.basename);
+		name.style.fontWeight = '500';
 
 		// Pin button
 		const pinButton = referenceContainer.createDiv('relation-sidebar-pin-button');
+		pinButton.style.display = 'flex';
+		pinButton.style.alignItems = 'center';
+		pinButton.style.cursor = 'pointer';
+		pinButton.style.padding = '4px';
 		this.updatePinButton(pinButton);
 
 		pinButton.addEventListener('click', () => {
@@ -490,8 +509,10 @@ export class RelationSidebarView extends ItemView {
 			// Check if tree has any children (ancestors/descendants exist)
 			if (tree && tree.children && tree.children.length > 0) {
 				// Render only the children, not the root node (current file)
+				// Adjust depth to remove indentation from skipped root
 				tree.children.forEach(childNode => {
-					this.renderer.render(childNode, content);
+					const adjustedNode = this.adjustTreeDepth(childNode, -1);
+					this.renderer.render(adjustedNode, content);
 				});
 			} else {
 				// Show empty message for this section
@@ -597,6 +618,22 @@ export class RelationSidebarView extends ItemView {
 			default:
 				return 'No relationships found';
 		}
+	}
+
+	/**
+	 * Adjusts the depth of a tree node and all its descendants.
+	 * Used to fix indentation when rendering subtrees without their root.
+	 *
+	 * @param node - The tree node to adjust
+	 * @param adjustment - Amount to add to depth (can be negative)
+	 * @returns A new tree node with adjusted depth
+	 */
+	private adjustTreeDepth(node: TreeNode, adjustment: number): TreeNode {
+		return {
+			...node,
+			depth: Math.max(0, node.depth + adjustment),
+			children: node.children.map(child => this.adjustTreeDepth(child, adjustment))
+		};
 	}
 
 	/**
