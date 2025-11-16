@@ -756,3 +756,133 @@
 	outline: 2px solid var(--background-modifier-border-focus);
 	outline-offset: 2px;
 }
+
+/* ============================================
+   Relation Codeblock Styles (Milestone 5.1)
+   ============================================ */
+
+/* Codeblock Container */
+.relation-codeblock-container {
+	padding: var(--size-4-2);
+	margin: var(--size-4-2) 0;
+	background: var(--background-secondary);
+	border-radius: var(--radius-m);
+	border: 1px solid var(--background-modifier-border);
+}
+
+/* Tree Mode - ensure all standard tree styles apply */
+.relation-codeblock-mode-tree .relation-codeblock-node {
+	position: relative;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-node-content {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 4px;
+	padding-left: calc(var(--tree-depth, 0) * 20px + 4px);
+	border-radius: 4px;
+	transition: background-color 0.1s ease;
+	cursor: pointer;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-node-content:hover {
+	background: var(--background-modifier-hover);
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-toggle {
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 4px;
+	color: var(--text-muted);
+	transition: transform 0.15s ease;
+	flex-shrink: 0;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-toggle:hover {
+	color: var(--text-normal);
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-children {
+	overflow: hidden;
+	transition: max-height 0.2s ease;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-collapsed {
+	display: none;
+}
+
+/* Compact Mode */
+.relation-codeblock-mode-compact {
+	padding: var(--size-2-1);
+}
+
+.relation-codeblock-mode-compact .relation-codeblock-node {
+	padding: var(--size-2-1) 0;
+	line-height: 1.2;
+}
+
+.relation-codeblock-mode-compact .relation-codeblock-node-content {
+	padding: 1px 2px;
+	padding-left: calc(var(--tree-depth, 0) * 20px + 4px);
+}
+
+/* List Mode */
+.relation-codeblock-mode-list .relation-codeblock-node-content {
+	padding-left: 4px !important;
+}
+
+.relation-codeblock-mode-list .relation-codeblock-toggle {
+	display: none;
+}
+
+.relation-codeblock-mode-list .relation-codeblock-children {
+	padding-left: 0;
+}
+
+/* Empty State */
+.relation-codeblock-empty {
+	padding: var(--size-4-4);
+	text-align: center;
+	color: var(--text-muted);
+	font-style: italic;
+	font-size: var(--font-ui-small);
+}
+
+/* Error Display */
+.relation-codeblock-error {
+	padding: var(--size-4-2);
+	margin: var(--size-4-2) 0;
+}
+
+.relation-codeblock-error-box {
+	background: var(--background-modifier-error);
+	border: 1px solid var(--color-red);
+	border-radius: var(--radius-m);
+	padding: var(--size-4-3);
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+}
+
+.relation-codeblock-error-icon {
+	font-size: var(--font-ui-larger);
+	line-height: 1;
+}
+
+.relation-codeblock-error-message {
+	color: var(--text-error);
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+}
+
+.relation-codeblock-error-field {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-family: var(--font-monospace);
+}
+
