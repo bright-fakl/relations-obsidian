@@ -541,6 +541,8 @@ export class RelationSidebarView extends ItemView {
 		}
 
 		const listContainer = container.createDiv('relation-siblings-list');
+		// Match font size with tree views
+		listContainer.style.fontSize = 'var(--font-ui-small)';
 
 		siblings.forEach((sibling: TFile) => {
 			const item = listContainer.createDiv('relation-sibling-item');
