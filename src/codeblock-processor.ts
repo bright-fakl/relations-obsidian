@@ -187,7 +187,7 @@ export class CodeblockProcessor {
 			}
 
 			// Render tree
-			this.renderTree(el, finalTree, params, truncatedCount, filterFunction !== null);
+			this.renderTree(el, finalTree, params, truncatedCount, filterFunction !== null, targetFile);
 
 		} catch (error) {
 			if (error instanceof CodeblockValidationError) {
@@ -276,13 +276,15 @@ export class CodeblockProcessor {
 	 * @param params - Codeblock parameters for styling
 	 * @param truncatedCount - Number of nodes truncated (0 if none)
 	 * @param hasFilters - Whether filters are active
+	 * @param targetFile - Target file for the tree (used in title)
 	 */
 	private renderTree(
 		container: HTMLElement,
 		tree: TreeNode | TreeNode[] | null,
 		params: CodeblockParams,
 		truncatedCount: number = 0,
-		hasFilters: boolean = false
+		hasFilters: boolean = false,
+		targetFile?: TFile
 	): void {
 		container.empty();
 		container.addClass('relation-codeblock-container');
@@ -300,6 +302,11 @@ export class CodeblockProcessor {
 		// Add data attribute when filters are active
 		if (hasFilters) {
 			container.setAttribute('data-filtered', 'true');
+		}
+
+		// Render title if requested
+		if (params.title && params.title !== 'none') {
+			this.renderTitle(container, params, hasFilters, targetFile);
 		}
 
 		// Handle empty result
@@ -335,6 +342,60 @@ export class CodeblockProcessor {
 			truncationEl.setText(`(+${truncatedCount} more...)`);
 			truncationEl.setAttribute('title', `${truncatedCount} nodes hidden due to max-nodes limit`);
 		}
+	}
+
+	/**
+	 * Renders title for the codeblock.
+	 *
+	 * @param container - Container element to render into
+	 * @param params - Codeblock parameters
+	 * @param hasFilters - Whether filters are active
+	 * @param targetFile - Target file for the tree
+	 */
+	private renderTitle(
+		container: HTMLElement,
+		params: CodeblockParams,
+		hasFilters: boolean,
+		targetFile?: TFile
+	): void {
+		const titleEl = container.createDiv('relation-codeblock-title');
+
+		// Generate title text based on mode
+		let titleText = '';
+
+		if (params.title === 'simple') {
+			// Simple mode: "Descendants of Note"
+			const typeName = params.type.charAt(0).toUpperCase() + params.type.slice(1);
+			const noteName = targetFile?.basename || params.note || 'Current note';
+			titleText = `${typeName} of ${noteName}`;
+		} else if (params.title === 'detailed') {
+			// Detailed mode: Include filtering information
+			const typeName = params.type.charAt(0).toUpperCase() + params.type.slice(1);
+			const noteName = targetFile?.basename || params.note || 'Current note';
+			titleText = `${typeName} of ${noteName}`;
+
+			// Add filter details
+			const filterParts: string[] = [];
+			if (params.filterTag) {
+				filterParts.push(`tag: ${params.filterTag}`);
+			}
+			if (params.filterFolder) {
+				filterParts.push(`folder: ${params.filterFolder}`);
+			}
+			if (params.exclude) {
+				const excludeCount = params.exclude.split(',').length;
+				filterParts.push(`excluding ${excludeCount} note${excludeCount > 1 ? 's' : ''}`);
+			}
+			if (params.maxNodes) {
+				filterParts.push(`max: ${params.maxNodes}`);
+			}
+
+			if (filterParts.length > 0) {
+				titleText += ` (${filterParts.join(', ')})`;
+			}
+		}
+
+		titleEl.setText(titleText);
 	}
 
 	/**

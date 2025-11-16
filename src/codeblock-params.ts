@@ -24,6 +24,14 @@ export type DisplayMode = 'tree' | 'list' | 'compact';
 export type StyleVariant = 'compact' | 'detailed' | 'minimal';
 
 /**
+ * Title display mode for the codeblock.
+ * - none: No title displayed
+ * - simple: Basic title (e.g., "Descendants of Note")
+ * - detailed: Detailed title with filter information
+ */
+export type TitleMode = 'none' | 'simple' | 'detailed';
+
+/**
  * Parameters for relation-tree codeblock.
  */
 export interface CodeblockParams {
@@ -64,6 +72,9 @@ export interface CodeblockParams {
 
 	/** Visual style variant (default: uses mode) */
 	style?: StyleVariant;
+
+	/** Title display mode (default: none) */
+	title?: TitleMode;
 }
 
 /**
@@ -214,6 +225,16 @@ export function parseCodeblockParams(source: string): CodeblockParams {
 					);
 				}
 				params.style = value as StyleVariant;
+				break;
+
+			case 'title':
+				if (!['none', 'simple', 'detailed'].includes(value)) {
+					throw new CodeblockValidationError(
+						`Invalid title: "${value}". Must be one of: none, simple, detailed`,
+						'title'
+					);
+				}
+				params.title = value as TitleMode;
 				break;
 
 			default:

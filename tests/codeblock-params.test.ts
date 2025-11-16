@@ -475,6 +475,33 @@ style: minimal
 				expect(params.style).toBe('minimal');
 			});
 
+			it('should parse title parameter - none', () => {
+				const source = `
+type: ancestors
+title: none
+`;
+				const params = parseCodeblockParams(source);
+				expect(params.title).toBe('none');
+			});
+
+			it('should parse title parameter - simple', () => {
+				const source = `
+type: ancestors
+title: simple
+`;
+				const params = parseCodeblockParams(source);
+				expect(params.title).toBe('simple');
+			});
+
+			it('should parse title parameter - detailed', () => {
+				const source = `
+type: ancestors
+title: detailed
+`;
+				const params = parseCodeblockParams(source);
+				expect(params.title).toBe('detailed');
+			});
+
 			it('should handle camelCase and kebab-case variants', () => {
 				const source1 = 'type: ancestors\nfilter-tag: #test';
 				const source2 = 'type: ancestors\nfilterTag: #test';
@@ -517,6 +544,14 @@ style: invalid
 				expect(() => parseCodeblockParams(source)).toThrow('compact, detailed, minimal');
 			});
 
+			it('should throw error for invalid title', () => {
+				const source = `
+type: ancestors
+title: invalid
+`;
+				expect(() => parseCodeblockParams(source)).toThrow('none, simple, detailed');
+			});
+
 			it('should combine all filters', () => {
 				const source = `
 type: ancestors
@@ -525,6 +560,7 @@ filter-folder: Projects/
 exclude: [[Archived]]
 max-nodes: 100
 style: detailed
+title: simple
 `;
 				const params = parseCodeblockParams(source);
 
@@ -533,6 +569,7 @@ style: detailed
 				expect(params.exclude).toBe('[[Archived]]');
 				expect(params.maxNodes).toBe(100);
 				expect(params.style).toBe('detailed');
+				expect(params.title).toBe('simple');
 			});
 
 			it('should combine filter params with existing params', () => {
