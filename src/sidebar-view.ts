@@ -1,8 +1,9 @@
 import { ItemView, WorkspaceLeaf, TFile, setIcon } from 'obsidian';
 import type ParentRelationPlugin from './main';
-import { TreeRenderer } from './tree-renderer';
+import { TreeRenderer, TreeRenderContext } from './tree-renderer';
 import { buildAncestorTree, buildDescendantTree, buildSiblingTree, TreeNode } from './tree-model';
 import { ParentFieldSelector } from './parent-field-selector';
+import { ContextMenuBuilder } from './context-menu-builder';
 
 /**
  * View type identifier for the relation sidebar
@@ -54,6 +55,7 @@ const DEFAULT_VIEW_STATE: SidebarViewState = {
 export class RelationSidebarView extends ItemView {
 	private plugin: ParentRelationPlugin;
 	private renderer: TreeRenderer;
+	private contextMenuBuilder: ContextMenuBuilder;
 	private currentFile: TFile | null = null;
 	private viewState: SidebarViewState;
 	private contentContainer!: HTMLElement;
@@ -65,13 +67,20 @@ export class RelationSidebarView extends ItemView {
 		this.plugin = plugin;
 		this.viewState = { ...DEFAULT_VIEW_STATE };
 
-		// Initialize tree renderer
+		// Initialize context menu builder
+		this.contextMenuBuilder = new ContextMenuBuilder(this.app, this.plugin);
+
+		// Initialize tree renderer with context menu support
 		this.renderer = new TreeRenderer(this.app, {
 			collapsible: true,
 			enableNavigation: true,
+			enableContextMenu: true,
 			showCycleIndicators: true,
 			cssPrefix: 'relation-tree'
 		});
+
+		// Connect context menu builder to renderer
+		this.renderer.setContextMenuBuilder(this.contextMenuBuilder);
 	}
 
 	/**
@@ -547,14 +556,22 @@ export class RelationSidebarView extends ItemView {
 				const initialDepth = sectionConfig.initialDepth ?? 2;
 				this.renderer.updateOptions({ initialDepth });
 
-				// Render only the children, not the root node (current file)
-				// Adjust depth to remove indentation from skipped root
-				tree.children.forEach(childNode => {
-					const adjustedNode = this.adjustTreeDepth(childNode, -1);
-					// Use renderNode() directly to preserve collapse state across multiple nodes
-					const nodeElement = this.renderer['renderNode'](adjustedNode, 0);
-					content.appendChild(nodeElement);
-				});
+				// Create render context for context menu support
+				const renderContext: TreeRenderContext = {
+					section: sectionType,
+					parentField: this.viewState.selectedParentField,
+					parentFieldDisplayName: fieldConfig.displayName || fieldConfig.name,
+					sidebarView: this
+				};
+
+				// Adjust tree depth to account for skipped root node
+				const adjustedTree = {
+					...tree,
+					children: tree.children.map(child => this.adjustTreeDepth(child, -1))
+				};
+
+				// Render with context menu support
+				this.renderer.render(adjustedTree, content, renderContext);
 			} else {
 				// Show empty message for this section
 				const emptyMessage = content.createDiv('relation-section-empty');

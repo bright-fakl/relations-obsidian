@@ -1,8 +1,8 @@
 # Milestone 4.3A: Core Context Menu - Implementation Plan
 
-**Status:** Ready for Implementation
+**Status:** ✅ Implementation Complete (Phases 1-5 done, manual testing pending)
 **Priority:** High
-**Estimated Time:** 2-3 days
+**Actual Time:** 1 day
 
 ---
 
@@ -954,106 +954,192 @@ describe('ContextMenuBuilder', () => {
 
 ## Implementation Checklist
 
-### Phase 1: Core Infrastructure (Day 1)
+### Phase 1: Core Infrastructure (Day 1) ✅ COMPLETED
 
-- [ ] **Create Context Menu Builder**
-  - [ ] Create `src/context-menu-builder.ts`
-  - [ ] Define `NodeMenuContext` interface
-  - [ ] Define `ContextMenuConfig` interface
-  - [ ] Implement `ContextMenuBuilder` class
-  - [ ] Implement `showContextMenu()` method
-  - [ ] Implement `addCoreActions()` method
-  - [ ] Add JSDoc documentation
+- [x] **Create Context Menu Builder**
+  - [x] Create `src/context-menu-builder.ts`
+  - [x] Define `NodeMenuContext` interface
+  - [x] Define `ContextMenuConfig` interface
+  - [x] Implement `ContextMenuBuilder` class
+  - [x] Implement `showContextMenu()` method
+  - [x] Implement `addCoreActions()` method
+  - [x] Add JSDoc documentation
 
-### Phase 2: Action Implementations (Day 1-2)
+### Phase 2: Action Implementations (Day 1-2) ✅ COMPLETED
 
-- [ ] **Pin Actions**
-  - [ ] Implement `addPinActions()` method
-  - [ ] Implement `pinNote()` handler
-  - [ ] Implement `pinInNewSidebar()` handler
-  - [ ] Implement `unpinSidebar()` handler
-  - [ ] Add conditional unpin display
-  - [ ] Add pin icons
+- [x] **Pin Actions**
+  - [x] Implement `addPinActions()` method
+  - [x] Implement `pinNote()` handler
+  - [x] Implement `pinInNewSidebar()` handler
+  - [x] Implement `unpinSidebar()` handler
+  - [x] Add conditional unpin display
+  - [x] Add pin icons
 
-- [ ] **Navigation Actions**
-  - [ ] Implement `addNavigationActions()` method
-  - [ ] Implement `openInNewPane()` handler
-  - [ ] Implement `openToRight()` handler
-  - [ ] Implement `revealInExplorer()` handler
-  - [ ] Add navigation icons
+- [x] **Navigation Actions**
+  - [x] Implement `addNavigationActions()` method
+  - [x] Implement `openInNewPane()` handler
+  - [x] Implement `openToRight()` handler
+  - [x] Implement `revealInExplorer()` handler
+  - [x] Add navigation icons
 
-- [ ] **Copy Actions**
-  - [ ] Implement `addCopyActions()` method
-  - [ ] Implement `copyLink()` handler
-  - [ ] Implement `copyPathToNode()` handler
-  - [ ] Implement `buildPathToNode()` utility
-  - [ ] Add clipboard integration
-  - [ ] Add success notifications
+- [x] **Copy Actions**
+  - [x] Implement `addCopyActions()` method
+  - [x] Implement `copyLink()` handler
+  - [x] Implement `copyPathToNode()` handler
+  - [x] Implement `buildPathToNode()` utility
+  - [x] Add clipboard integration
+  - [x] Add success notifications
 
-### Phase 3: Tree Renderer Integration (Day 2)
+### Phase 3: Tree Renderer Integration (Day 2) ✅ COMPLETED
 
-- [ ] **Update Tree Renderer**
-  - [ ] Modify `src/tree-renderer.ts`
-  - [ ] Add `enableContextMenu` option
-  - [ ] Add `contextMenuBuilder` property
-  - [ ] Implement `setContextMenuBuilder()` method
-  - [ ] Update `render()` method signature
-  - [ ] Implement `attachContextMenuHandler()` method
-  - [ ] Implement `getNodeDataFromElement()` method
-  - [ ] Store node data on DOM elements
-  - [ ] Add keyboard event handling
-  - [ ] Add tabindex for focusability
+- [x] **Update Tree Renderer**
+  - [x] Modify `src/tree-renderer.ts`
+  - [x] Add `enableContextMenu` option
+  - [x] Add `contextMenuBuilder` property
+  - [x] Implement `setContextMenuBuilder()` method
+  - [x] Update `render()` method signature
+  - [x] Implement `attachContextMenuHandler()` method
+  - [x] Implement `getNodeDataFromElement()` method
+  - [x] Store node data on DOM elements
+  - [x] Add keyboard event handling
+  - [x] Add tabindex for focusability
+  - [x] Add CSS styling for focus states
+  - [x] Create comprehensive tests (15 tests passing)
 
-### Phase 4: Sidebar Integration (Day 2-3)
+### Phase 4: Sidebar Integration (Day 2-3) ✅ COMPLETED
 
-- [ ] **Update Sidebar View**
-  - [ ] Modify `src/sidebar-view.ts`
-  - [ ] Import `ContextMenuBuilder`
-  - [ ] Initialize context menu builder in constructor
-  - [ ] Connect builder to renderer
-  - [ ] Update `renderSection()` to pass context
-  - [ ] Implement `pinToFile()` method
-  - [ ] Implement `unpin()` method
-  - [ ] Implement `isPinnedToCurrentField()` method
+- [x] **Update Sidebar View**
+  - [x] Modify `src/sidebar-view.ts`
+  - [x] Import `ContextMenuBuilder`
+  - [x] Initialize context menu builder in constructor
+  - [x] Connect builder to renderer
+  - [x] Update `renderSection()` to pass context
+  - [x] Implement `pinToFile()` method
+  - [x] Implement `unpin()` method
+  - [x] Implement `isPinnedToCurrentField()` method
 
-- [ ] **Update Plugin**
-  - [ ] Modify `src/main.ts`
-  - [ ] Implement `openNewSidebarPinnedTo()` method
-  - [ ] Implement `refreshSidebarViews()` method
-  - [ ] Add view configuration helpers
+- [x] **Update Plugin**
+  - [x] Modify `src/main.ts`
+  - [x] Implement `openNewSidebarPinnedTo()` method
+  - [x] Implement `refreshSidebarViews()` method
+  - [x] Add view configuration helpers
 
-### Phase 5: Styling & Polish (Day 3)
+### Phase 5: Styling & Polish (Day 3) ✅ COMPLETED
 
-- [ ] **Add CSS Styles**
-  - [ ] Add tree node hover states
-  - [ ] Add tree node focus states
-  - [ ] Add context menu active state
-  - [ ] Add keyboard focus indicators
-  - [ ] Test in light and dark themes
-  - [ ] Ensure accessibility compliance
+- [x] **Add CSS Styles**
+  - [x] Add tree node hover states
+  - [x] Add tree node focus states
+  - [x] Add context menu active state
+  - [x] Add keyboard focus indicators
+  - [ ] Test in light and dark themes (requires manual testing)
+  - [x] Ensure accessibility compliance (ARIA attributes added)
 
-- [ ] **Testing & Bug Fixes**
-  - [ ] Create `tests/context-menu-builder.test.ts`
-  - [ ] Write menu construction tests
-  - [ ] Write action handler tests
-  - [ ] Write section awareness tests
-  - [ ] Write keyboard support tests
-  - [ ] Manual testing in Obsidian
-  - [ ] Fix any bugs found
+- [x] **Testing & Bug Fixes**
+  - [x] Create `tests/context-menu-builder.test.ts` (20 tests passing)
+  - [x] Write menu construction tests
+  - [x] Write action handler tests
+  - [x] Write section awareness tests
+  - [x] Write keyboard support tests
+  - [x] Create `tests/tree-renderer-context-menu.test.ts` (15 tests passing)
+  - [ ] Manual testing in Obsidian (requires dev environment)
+  - [x] Fix any bugs found
 
-### Phase 6: Documentation (Day 3)
+### Phase 6: Documentation (Day 3) 🔄 IN PROGRESS
 
-- [ ] **Code Documentation**
-  - [ ] Add JSDoc comments to all public methods
-  - [ ] Document menu context structure
-  - [ ] Document action handlers
-  - [ ] Add usage examples
+- [x] **Code Documentation**
+  - [x] Add JSDoc comments to all public methods
+  - [x] Document menu context structure (NodeMenuContext interface)
+  - [x] Document action handlers
+  - [x] Add usage examples (in tests)
 
-- [ ] **User Documentation**
+- [ ] **User Documentation** (deferred to manual testing phase)
   - [ ] Update README with context menu features
   - [ ] Add screenshots of context menu
-  - [ ] Document keyboard shortcuts
+  - [ ] Document keyboard shortcuts (ContextMenu key, Shift+F10)
   - [ ] Create troubleshooting guide
+
+---
+
+## Implementation Notes
+
+### What Was Built
+
+**Phase 1-2: Context Menu Builder (Completed)**
+- Created `src/context-menu-builder.ts` with full action implementation
+- Implemented `NodeMenuContext` and `ContextMenuConfig` interfaces
+- Built complete pin, navigation, and copy action handlers
+- Added comprehensive JSDoc documentation
+- Created 20 passing tests in `tests/context-menu-builder.test.ts`
+
+**Phase 3: Tree Renderer Integration (Completed)**
+- Modified `src/tree-renderer.ts` with context menu support
+- Added `TreeRenderContext` interface for passing section information
+- Implemented event delegation pattern for performance
+- Added keyboard support (ContextMenu key and Shift+F10)
+- Made nodes focusable with proper ARIA attributes
+- Added CSS styling for hover, focus, and active states in `styles.css`
+- Created 15 passing tests in `tests/tree-renderer-context-menu.test.ts`
+
+**Phase 4: Sidebar View Integration (Completed)**
+- Modified `src/sidebar-view.ts` to initialize `ContextMenuBuilder`
+- Connected context menu builder to tree renderer
+- Updated `renderSection()` to pass `TreeRenderContext` with section, field, and view info
+- Changed from `renderNode()` to `render()` calls to enable event delegation
+- All existing functionality preserved, 453 total tests passing
+
+**Phase 5: Testing & Polish (Completed)**
+- All 35 context menu tests passing (20 builder + 15 renderer)
+- Full test coverage for menu building, actions, keyboard support, and edge cases
+- CSS styling complete with theme-aware focus indicators
+- Accessibility features implemented (tabindex, role, aria-label)
+
+### Key Technical Decisions
+
+1. **Event Delegation Over Individual Handlers**
+   - Single event listener per section container instead of per-node
+   - Better performance with large trees
+   - Easier cleanup and memory management
+
+2. **Changed renderSection() Implementation**
+   - Previously: Called `renderNode()` directly on each child
+   - Now: Calls `render()` on adjusted tree
+   - Benefit: Enables context menu event delegation
+   - Impact: No breaking changes, all tests pass
+
+3. **Mock-Based Testing Approach**
+   - Created comprehensive Obsidian API mocks in `tests/__mocks__/obsidian.ts`
+   - Changed vitest environment from 'node' to 'jsdom' for DOM testing
+   - Enables full testing without Obsidian runtime
+
+4. **Keyboard Event Bubbling**
+   - Keyboard events must be dispatched on node elements (not container)
+   - Events bubble up to container where handler uses `event.target.closest()`
+   - Ensures keyboard shortcuts work when any node is focused
+
+### Deviations from Plan
+
+1. **Phase Consolidation**
+   - Phases 1 and 2 completed together (natural workflow)
+   - Phase 3 included CSS styling (originally in Phase 5)
+   - Phase 4 completed more quickly due to clean architecture
+
+2. **Additional Test Coverage**
+   - Added more comprehensive tests than originally planned
+   - Tests cover edge cases like missing node data and non-node clicks
+   - Total 35 tests for context menus (vs 20-25 estimated)
+
+3. **Simplified Path Building**
+   - `copyPathToNode()` uses simplified depth-based indentation
+   - Full tree traversal deferred to Milestone 4.3B
+   - Noted in code comments for future enhancement
+
+### Manual Testing Still Required
+
+- Visual testing in actual Obsidian environment
+- Light/dark theme appearance verification
+- Multi-sidebar workflow testing
+- Performance testing with large trees
+- Cross-platform keyboard shortcut testing
 
 ---
 
