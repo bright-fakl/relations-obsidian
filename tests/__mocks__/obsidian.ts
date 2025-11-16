@@ -69,7 +69,6 @@ export class App {
 		getActiveFile: vi.fn(),
 		getLeavesOfType: vi.fn(() => []),
 		getRightLeaf: vi.fn(),
-		revealFileInExplorer: vi.fn(),
 		onLayoutReady: vi.fn()
 	};
 

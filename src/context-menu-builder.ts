@@ -290,7 +290,12 @@ export class ContextMenuBuilder {
 	 * @param context - The menu context
 	 */
 	private revealInExplorer(context: NodeMenuContext): void {
-		this.app.workspace.revealFileInExplorer(context.file);
+		// Get the file explorer leaf
+		const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+		if (fileExplorer && fileExplorer.view) {
+			// Use type assertion as revealInFolder is not in official types
+			(fileExplorer.view as any).revealInFolder(context.file);
+		}
 	}
 
 	/**

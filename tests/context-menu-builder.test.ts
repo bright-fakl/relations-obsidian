@@ -17,7 +17,17 @@ describe('ContextMenuBuilder', () => {
 		mockApp.workspace.getLeaf = vi.fn().mockReturnValue({
 			openFile: vi.fn().mockResolvedValue(undefined)
 		});
-		mockApp.workspace.revealFileInExplorer = vi.fn();
+		// Mock file explorer for revealInFolder
+		mockApp.workspace.getLeavesOfType = vi.fn((type: string) => {
+			if (type === 'file-explorer') {
+				return [{
+					view: {
+						revealInFolder: vi.fn()
+					}
+				}];
+			}
+			return [];
+		});
 
 		// Create mock plugin
 		mockPlugin = {
