@@ -49,6 +49,9 @@ export interface TreeRenderContext {
 	/** Display name of the parent field */
 	parentFieldDisplayName?: string;
 
+	/** Display name of the section */
+	sectionDisplayName?: string;
+
 	/** Reference to the sidebar view */
 	sidebarView?: RelationSidebarView;
 }
@@ -524,6 +527,7 @@ export class TreeRenderer {
 				section: context.section || 'ancestors',
 				parentField: context.parentField || '',
 				parentFieldDisplayName: context.parentFieldDisplayName || '',
+				sectionDisplayName: context.sectionDisplayName || '',
 				sidebarView: context.sidebarView!,
 				isPinned: context.sidebarView?.isPinnedToCurrentField() || false,
 				targetElement: nodeEl,
@@ -557,6 +561,7 @@ export class TreeRenderer {
 					section: context.section || 'ancestors',
 					parentField: context.parentField || '',
 					parentFieldDisplayName: context.parentFieldDisplayName || '',
+					sectionDisplayName: context.sectionDisplayName || '',
 					sidebarView: context.sidebarView!,
 					isPinned: context.sidebarView?.isPinnedToCurrentField() || false,
 					targetElement: nodeEl

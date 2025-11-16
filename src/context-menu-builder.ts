@@ -24,6 +24,9 @@ export interface NodeMenuContext {
 	/** Display name of the parent field */
 	parentFieldDisplayName: string;
 
+	/** Display name of the section */
+	sectionDisplayName: string;
+
 	/** Reference to the sidebar instance */
 	sidebarView: RelationSidebarView;
 
@@ -454,49 +457,69 @@ export class ContextMenuBuilder {
 	}
 
 	/**
+	 * Converts plural section names to singular form (simple heuristic).
+	 *
+	 * @param name - The section display name (potentially plural)
+	 * @returns Singular form of the name
+	 */
+	private singularize(name: string): string {
+		// Simple heuristic: if ends with 's', remove it
+		// This works for: Ancestors → Ancestor, Descendants → Descendant, Siblings → Sibling
+		// May not work perfectly for all cases (e.g., "Categories" → "Categorie")
+		// but is good enough for most common section names
+		if (name.endsWith('s') && name.length > 1) {
+			return name.slice(0, -1);
+		}
+		return name;
+	}
+
+	/**
 	 * Adds relationship modification actions to the menu.
 	 *
 	 * @param menu - The menu to add items to
 	 * @param context - The advanced menu context
 	 */
 	private addRelationshipActions(menu: Menu, context: AdvancedMenuContext): void {
-		const { section, parentFieldDisplayName, isCurrentParent, isCurrentChild } = context;
+		const { section, sectionDisplayName, isCurrentParent, isCurrentChild } = context;
 
-		// "Set as [Field]" - Only if NOT already a parent
+		// Convert section name to singular for menu labels
+		const singularSectionName = this.singularize(sectionDisplayName);
+
+		// "Set as [SectionName]" - Only if NOT already a parent
 		if ((section === 'ancestors' || section === 'siblings') && !isCurrentParent) {
 			menu.addItem(item => {
 				item
-					.setTitle(`Set as ${parentFieldDisplayName}`)
+					.setTitle(`Set as ${singularSectionName}`)
 					.setIcon('arrow-up')
 					.onClick(() => this.handleSetAsParent(context));
 			});
 		}
 
-		// "Remove as [Field]" - Only if IS a parent
+		// "Remove as [SectionName]" - Only if IS a parent
 		if ((section === 'ancestors' || section === 'siblings') && isCurrentParent) {
 			menu.addItem(item => {
 				item
-					.setTitle(`Remove as ${parentFieldDisplayName}`)
+					.setTitle(`Remove as ${singularSectionName}`)
 					.setIcon('x')
 					.onClick(() => this.handleRemoveAsParent(context));
 			});
 		}
 
-		// "Set as Child" - For descendants (only if NOT a child) and siblings (always)
+		// "Set as [SectionName]" - For descendants (only if NOT a child) and siblings (always)
 		if ((section === 'descendants' && !isCurrentChild) || section === 'siblings') {
 			menu.addItem(item => {
 				item
-					.setTitle('Set as Child')
+					.setTitle(`Set as ${singularSectionName}`)
 					.setIcon('arrow-down')
 					.onClick(() => this.handleSetAsChild(context));
 			});
 		}
 
-		// "Remove as Child" - Only if current file IS the parent of this node
+		// "Remove as [SectionName]" - Only if current file IS the parent of this node
 		if (section === 'descendants' && isCurrentChild) {
 			menu.addItem(item => {
 				item
-					.setTitle('Remove as Child')
+					.setTitle(`Remove as ${singularSectionName}`)
 					.setIcon('x')
 					.onClick(() => this.handleRemoveAsChild(context));
 			});
@@ -511,7 +534,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleSetAsParent(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, parentFieldDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -531,11 +554,12 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Added as ${parentFieldDisplayName}`);
+			const singularName = this.singularize(sectionDisplayName);
+			new Notice(`Added as ${singularName}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to add ${parentFieldDisplayName}: ${result.error}`);
+			new Notice(`Failed to add: ${result.error}`);
 		}
 	}
 
@@ -548,7 +572,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleSetAsChild(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, parentFieldDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -568,11 +592,12 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Added as child of "${file.basename}"`);
+			const singularName = this.singularize(sectionDisplayName);
+			new Notice(`Added as ${singularName}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to add as child: ${result.error}`);
+			new Notice(`Failed to add: ${result.error}`);
 		}
 	}
 
@@ -584,7 +609,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleRemoveAsParent(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, parentFieldDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -592,10 +617,12 @@ export class ContextMenuBuilder {
 			return;
 		}
 
+		const singularName = this.singularize(sectionDisplayName);
+
 		// Confirm destructive action
 		const confirmed = await this.confirmAction(
 			'Remove Relationship',
-			`Remove "${file.basename}" as ${parentFieldDisplayName}?`
+			`Remove "${file.basename}" as ${singularName}?`
 		);
 
 		if (!confirmed) return;
@@ -612,11 +639,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Removed as ${parentFieldDisplayName}`);
+			new Notice(`Removed as ${singularName}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to remove ${parentFieldDisplayName}: ${result.error}`);
+			new Notice(`Failed to remove: ${result.error}`);
 		}
 	}
 
@@ -628,7 +655,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleRemoveAsChild(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, parentFieldDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -636,10 +663,12 @@ export class ContextMenuBuilder {
 			return;
 		}
 
+		const singularName = this.singularize(sectionDisplayName);
+
 		// Confirm destructive action
 		const confirmed = await this.confirmAction(
 			'Remove Relationship',
-			`Remove current note as a child of "${file.basename}"?`
+			`Remove current note as ${singularName} of "${file.basename}"?`
 		);
 
 		if (!confirmed) return;
@@ -656,11 +685,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice('Removed as child');
+			new Notice(`Removed as ${singularName}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to remove as child: ${result.error}`);
+			new Notice(`Failed to remove: ${result.error}`);
 		}
 	}
 

@@ -561,6 +561,7 @@ export class RelationSidebarView extends ItemView {
 					section: sectionType,
 					parentField: this.viewState.selectedParentField,
 					parentFieldDisplayName: fieldConfig.displayName || fieldConfig.name,
+					sectionDisplayName: sectionConfig.displayName || sectionType,
 					sidebarView: this
 				};
 
@@ -675,6 +676,7 @@ export class RelationSidebarView extends ItemView {
 					section: 'siblings' as const,
 					parentField: this.viewState.selectedParentField,
 					parentFieldDisplayName: fieldConfig?.displayName || this.viewState.selectedParentField,
+					sectionDisplayName: sectionConfig.displayName || 'siblings',
 					sidebarView: this,
 					isPinned: this.isPinnedToCurrentField(),
 					targetElement: item,
