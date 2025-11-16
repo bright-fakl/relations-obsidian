@@ -50,6 +50,9 @@ describe('ContextMenuBuilder', () => {
 			section: 'ancestors',
 			parentField: 'parent',
 			parentFieldDisplayName: 'Parent',
+			sectionDisplayName: 'Ancestors',
+			ancestorsSectionDisplayName: 'Ancestors',
+			descendantsSectionDisplayName: 'Descendants',
 			sidebarView: {
 				pinToFile: vi.fn(),
 				unpin: vi.fn(),

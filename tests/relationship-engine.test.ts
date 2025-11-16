@@ -1678,11 +1678,11 @@ describe('RelationshipEngine - getSiblings', () => {
 
       const siblings = engine.getSiblings(fileA);
 
-      // Expect: Correct siblings without infinite loops
-      // Sibling method doesn't traverse, so cycles don't affect it
+      // Expect: Only C is a sibling (B is filtered out as an ancestor)
+      // From A's perspective: A → P → B (cycle), so B is an ancestor, not a sibling
       expect(siblings).toBeDefined();
       const names = siblings.map(f => f.basename).sort();
-      expect(names).toEqual(['B', 'C']);
+      expect(names).toEqual(['C']);
     });
   });
 
