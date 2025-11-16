@@ -204,10 +204,16 @@ export class RelationSidebarView extends ItemView {
 			setIcon(button, 'pin');
 			button.addClass('is-active');
 			button.setAttribute('aria-label', 'Unpin from this note');
+			// Visual feedback for pinned state
+			button.style.color = 'var(--interactive-accent)';
+			button.style.opacity = '1';
 		} else {
 			setIcon(button, 'pin');
 			button.removeClass('is-active');
 			button.setAttribute('aria-label', 'Pin to this note');
+			// Visual feedback for unpinned state
+			button.style.color = 'var(--icon-color)';
+			button.style.opacity = '0.5';
 		}
 	}
 
