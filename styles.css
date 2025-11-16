@@ -770,30 +770,77 @@
 	border: 1px solid var(--background-modifier-border);
 }
 
+/* Tree Mode - ensure all standard tree styles apply */
+.relation-codeblock-mode-tree .relation-codeblock-node {
+	position: relative;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-node-content {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 4px;
+	padding-left: calc(var(--tree-depth, 0) * 20px + 4px);
+	border-radius: 4px;
+	transition: background-color 0.1s ease;
+	cursor: pointer;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-node-content:hover {
+	background: var(--background-modifier-hover);
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-toggle {
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 4px;
+	color: var(--text-muted);
+	transition: transform 0.15s ease;
+	flex-shrink: 0;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-toggle:hover {
+	color: var(--text-normal);
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-children {
+	overflow: hidden;
+	transition: max-height 0.2s ease;
+}
+
+.relation-codeblock-mode-tree .relation-codeblock-collapsed {
+	display: none;
+}
+
 /* Compact Mode */
 .relation-codeblock-mode-compact {
 	padding: var(--size-2-1);
 }
 
-.relation-codeblock-mode-compact .relation-tree-node {
+.relation-codeblock-mode-compact .relation-codeblock-node {
 	padding: var(--size-2-1) 0;
 	line-height: 1.2;
 }
 
-.relation-codeblock-mode-compact .relation-tree-node-content {
+.relation-codeblock-mode-compact .relation-codeblock-node-content {
 	padding: 1px 2px;
+	padding-left: calc(var(--tree-depth, 0) * 20px + 4px);
 }
 
 /* List Mode */
-.relation-codeblock-mode-list .relation-tree-node-content {
+.relation-codeblock-mode-list .relation-codeblock-node-content {
 	padding-left: 4px !important;
 }
 
-.relation-codeblock-mode-list .relation-tree-toggle {
+.relation-codeblock-mode-list .relation-codeblock-toggle {
 	display: none;
 }
 
-.relation-codeblock-mode-list .relation-tree-children {
+.relation-codeblock-mode-list .relation-codeblock-children {
 	padding-left: 0;
 }
 
@@ -839,22 +886,3 @@
 	font-family: var(--font-monospace);
 }
 
-/* Tree Styling in Codeblocks */
-.relation-codeblock-container .relation-tree-node-content {
-	cursor: pointer;
-}
-
-.relation-codeblock-container .relation-tree-node-content:hover {
-	background: var(--background-modifier-hover);
-}
-
-/* Ensure codeblock trees have proper spacing */
-.relation-codeblock-container .relation-tree-container {
-	padding: 0;
-}
-
-/* Make codeblock trees slightly more compact by default */
-.relation-codeblock-container:not(.relation-codeblock-mode-compact) .relation-tree-node-content {
-	padding-top: 3px;
-	padding-bottom: 3px;
-}
