@@ -526,7 +526,7 @@ export class RelationSidebarView extends ItemView {
 		// Build and render tree/list for this section
 		if (sectionType === 'siblings') {
 			// Render siblings as a flat list
-			this.renderSiblingsList(file, engine, content);
+			this.renderSiblingsList(file, engine, content, sectionConfig);
 		} else {
 			// Build and render tree for ancestors/descendants
 			const tree = this.buildTreeForSection(sectionType, file, fieldConfig, engine, graph);
@@ -555,8 +555,10 @@ export class RelationSidebarView extends ItemView {
 	/**
 	 * Renders siblings as a flat list instead of a tree.
 	 */
-	private renderSiblingsList(file: TFile, engine: any, container: HTMLElement): void {
-		const siblings = engine.getSiblings(file, false); // Exclude self
+	private renderSiblingsList(file: TFile, engine: any, container: HTMLElement, sectionConfig: any): void {
+		// Get siblings with include self option
+		const includeSelf = sectionConfig.includeSelf || false;
+		const siblings = engine.getSiblings(file, includeSelf);
 
 		if (siblings.length === 0) {
 			const emptyMessage = container.createDiv('relation-section-empty');
@@ -564,11 +566,14 @@ export class RelationSidebarView extends ItemView {
 			return;
 		}
 
+		// Sort siblings based on configuration
+		const sortedSiblings = this.sortSiblings(siblings, sectionConfig.sortOrder || 'alphabetical');
+
 		const listContainer = container.createDiv('relation-siblings-list');
 		// Match font size with tree views
 		listContainer.style.fontSize = 'var(--font-ui-small)';
 
-		siblings.forEach((sibling: TFile) => {
+		sortedSiblings.forEach((sibling: TFile) => {
 			const item = listContainer.createDiv('relation-sibling-item');
 
 			// File icon
@@ -634,6 +639,31 @@ export class RelationSidebarView extends ItemView {
 
 		// Re-render to update UI
 		this.updateView();
+	}
+
+	/**
+	 * Sorts siblings according to configuration.
+	 *
+	 * @param siblings - Array of sibling files
+	 * @param sortOrder - How to sort: 'alphabetical', 'created', or 'modified'
+	 * @returns Sorted array of siblings
+	 */
+	private sortSiblings(siblings: TFile[], sortOrder: 'alphabetical' | 'created' | 'modified'): TFile[] {
+		const sorted = [...siblings];
+
+		switch (sortOrder) {
+			case 'alphabetical':
+				sorted.sort((a, b) => a.basename.localeCompare(b.basename));
+				break;
+			case 'created':
+				sorted.sort((a, b) => a.stat.ctime - b.stat.ctime);
+				break;
+			case 'modified':
+				sorted.sort((a, b) => b.stat.mtime - a.stat.mtime); // Most recent first
+				break;
+		}
+
+		return sorted;
 	}
 
 	/**
