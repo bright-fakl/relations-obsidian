@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TFile, App, CachedMetadata } from 'obsidian';
 import { RelationGraph } from '../src/relation-graph';
+import { FrontmatterCache } from '../src/frontmatter-cache';
 import { GraphValidator, DiagnosticSeverity, DiagnosticType } from '../src/graph-validator';
 import { CycleDetector } from '../src/cycle-detector';
 
@@ -50,7 +51,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -71,7 +73,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -100,7 +103,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -134,7 +138,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC, fileD]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const cycles = graph.getAllCycles();
@@ -155,7 +160,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const cycles = graph.getAllCycles();
@@ -172,7 +178,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const cycles = graph.getAllCycles();
@@ -196,7 +203,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -222,7 +230,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -246,7 +255,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -271,7 +281,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -296,7 +307,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, files);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -317,7 +329,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -338,7 +351,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -360,7 +374,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -380,7 +395,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const before = Date.now();
@@ -404,7 +420,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB, fileC]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -434,7 +451,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -453,7 +471,8 @@ describe('GraphValidator', () => {
 
       const mockApp2 = createMockApp(fileMetadata2, [fileB, fileC]);
 
-      const graph2 = new RelationGraph(mockApp2, 'parent');
+      const frontmatterCache2 = new FrontmatterCache(mockApp2);
+      const graph2 = new RelationGraph(mockApp2, 'parent', 5, frontmatterCache2);
       graph2.build();
 
       const diagnostics2 = graph2.getDiagnostics();
@@ -472,7 +491,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -494,7 +514,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA, fileB]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -510,7 +531,8 @@ describe('GraphValidator', () => {
       const fileMetadata = new Map<string, any>();
       const mockApp = createMockApp(fileMetadata, []);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -529,7 +551,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics = graph.getDiagnostics();
@@ -554,7 +577,8 @@ describe('GraphValidator', () => {
 
       const mockApp = createMockApp(fileMetadata, [fileA]);
 
-      const graph = new RelationGraph(mockApp, 'parent');
+      const frontmatterCache = new FrontmatterCache(mockApp);
+      const graph = new RelationGraph(mockApp, 'parent', 5, frontmatterCache);
       graph.build();
 
       const diagnostics1 = graph.validateGraph();

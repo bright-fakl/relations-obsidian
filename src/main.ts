@@ -1,56 +1,123 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, TAbstractFile } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, TAbstractFile, Notice } from 'obsidian';
 import { RelationGraph } from './relation-graph';
 import { RelationshipEngine } from './relationship-engine';
 import { DiagnosticSeverity } from './graph-validator';
 import { VIEW_TYPE_RELATION_SIDEBAR, RelationSidebarView } from './sidebar-view';
+import { FrontmatterCache } from './frontmatter-cache';
 import {
   AncestorQueryResult,
   DescendantQueryResult,
   SiblingQueryResult,
   CousinQueryResult,
   FullLineageResult,
-  RelationshipQueryOptions
+  RelationshipQueryOptions,
+  ParentFieldConfig,
+  SectionConfig
 } from './types';
 
-interface ParentRelationSettings {
-  parentField: string;
-  maxDepth: number;
+/**
+ * Plugin settings with multi-parent-field support
+ */
+export interface ParentRelationSettings {
+  /** Array of configured parent fields */
+  parentFields: ParentFieldConfig[];
+
+  /** Which parent field to show by default when opening sidebar */
+  defaultParentField: string;
+
+  /** UI style preference: 'auto', 'segmented', or 'dropdown' */
+  uiStyle: 'auto' | 'segmented' | 'dropdown';
+
+  /** Diagnostic mode toggle */
   diagnosticMode: boolean;
 }
 
-const DEFAULT_SETTINGS: ParentRelationSettings = {
-  parentField: 'parent',
+const DEFAULT_SECTION_CONFIG: SectionConfig = {
+  displayName: '',  // Will be set per section type
+  visible: true,
+  collapsed: false,
   maxDepth: 5,
+  initialDepth: 2,
+  sortOrder: 'alphabetical',
+  includeSelf: false
+};
+
+const DEFAULT_PARENT_FIELD_CONFIG: ParentFieldConfig = {
+  name: 'parent',
+  displayName: 'Parent',
+  ancestors: {
+    ...DEFAULT_SECTION_CONFIG,
+    displayName: 'Ancestors',
+    maxDepth: 5,
+    initialDepth: 2
+  },
+  descendants: {
+    ...DEFAULT_SECTION_CONFIG,
+    displayName: 'Descendants',
+    maxDepth: 5,
+    initialDepth: 2
+  },
+  siblings: {
+    ...DEFAULT_SECTION_CONFIG,
+    displayName: 'Siblings',
+    sortOrder: 'alphabetical',
+    includeSelf: false
+  }
+};
+
+const DEFAULT_SETTINGS: ParentRelationSettings = {
+  parentFields: [DEFAULT_PARENT_FIELD_CONFIG],
+  defaultParentField: 'parent',
+  uiStyle: 'auto',
   diagnosticMode: false
 };
 
 export default class ParentRelationPlugin extends Plugin {
   settings!: ParentRelationSettings;
-  relationGraph!: RelationGraph;
-  relationshipEngine!: RelationshipEngine;
+
+  // Multiple graphs (one per parent field)
+  relationGraphs!: Map<string, RelationGraph>;
+
+  // Multiple engines (one per graph)
+  relationshipEngines!: Map<string, RelationshipEngine>;
+
+  // Shared frontmatter cache
+  frontmatterCache!: FrontmatterCache;
 
   async onload() {
     await this.loadSettings();
 
-    this.relationGraph = new RelationGraph(
-      this.app,
-      this.settings.parentField,
-      this.settings.maxDepth
-    );
+    // Initialize frontmatter cache
+    this.frontmatterCache = new FrontmatterCache(this.app);
 
-    // Wait for metadata cache to be ready before building graph
+    // Initialize graphs and engines for each parent field
+    this.relationGraphs = new Map();
+    this.relationshipEngines = new Map();
+
+    this.settings.parentFields.forEach(fieldConfig => {
+      const graph = new RelationGraph(
+        this.app,
+        fieldConfig.name,
+        fieldConfig.ancestors.maxDepth ?? 5,
+        this.frontmatterCache
+      );
+
+      const engine = new RelationshipEngine(graph);
+
+      this.relationGraphs.set(fieldConfig.name, graph);
+      this.relationshipEngines.set(fieldConfig.name, engine);
+    });
+
+    // Wait for metadata cache to be ready before building graphs
     if (this.app.workspace.layoutReady) {
       // If workspace is already ready, build immediately
-      this.relationGraph.build();
+      this.buildAllGraphs();
     } else {
       // Otherwise, wait for layout-ready event
       this.app.workspace.onLayoutReady(() => {
-        this.relationGraph.build();
+        this.buildAllGraphs();
       });
     }
-
-    // Initialize relationship engine
-    this.relationshipEngine = new RelationshipEngine(this.relationGraph);
 
     // Register sidebar view
     this.registerView(
@@ -84,16 +151,20 @@ export default class ParentRelationPlugin extends Plugin {
     this.addSettingTab(new ParentRelationSettingTab(this.app, this));
 
     // Use incremental updates for better performance
+    // Update all graphs on file changes
     this.registerEvent(
       this.app.metadataCache.on('changed', (file: TFile) => {
-        this.relationGraph.updateNode(file);
+        this.frontmatterCache.invalidate(file);
+        this.relationGraphs.forEach(graph => graph.updateNode(file));
       })
     );
 
     this.registerEvent(
       this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
         if (file instanceof TFile) {
-          this.relationGraph.renameNode(file, oldPath);
+          this.frontmatterCache.invalidateByPath(oldPath);
+          this.frontmatterCache.invalidate(file);
+          this.relationGraphs.forEach(graph => graph.renameNode(file, oldPath));
         }
       })
     );
@@ -101,7 +172,8 @@ export default class ParentRelationPlugin extends Plugin {
     this.registerEvent(
       this.app.vault.on('delete', (file: TAbstractFile) => {
         if (file instanceof TFile) {
-          this.relationGraph.removeNode(file);
+          this.frontmatterCache.invalidate(file);
+          this.relationGraphs.forEach(graph => graph.removeNode(file));
         }
       })
     );
@@ -118,10 +190,37 @@ export default class ParentRelationPlugin extends Plugin {
     console.log('Parent Relation Explorer loaded');
   }
 
+  /**
+   * Builds all graphs.
+   */
+  buildAllGraphs(): void {
+    this.relationGraphs.forEach(graph => graph.build());
+  }
+
+  /**
+   * Gets the graph for a specific parent field.
+   *
+   * @param fieldName - The parent field name
+   * @returns The RelationGraph instance, or undefined if not found
+   */
+  getGraphForField(fieldName: string): RelationGraph | undefined {
+    return this.relationGraphs.get(fieldName);
+  }
+
+  /**
+   * Gets the relationship engine for a specific parent field.
+   *
+   * @param fieldName - The parent field name
+   * @returns The RelationshipEngine instance, or undefined if not found
+   */
+  getEngineForField(fieldName: string): RelationshipEngine | undefined {
+    return this.relationshipEngines.get(fieldName);
+  }
+
   onunload() {
     // Detach sidebar views
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_RELATION_SIDEBAR);
-    
+
     console.log('Parent Relation Explorer unloaded');
   }
 
@@ -131,8 +230,13 @@ export default class ParentRelationPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-    // Update maxDepth in graph when settings change
-    this.relationGraph.setMaxDepth(this.settings.maxDepth);
+    // Update maxDepth in all graphs when settings change
+    this.settings.parentFields.forEach(fieldConfig => {
+      const graph = this.relationGraphs.get(fieldConfig.name);
+      if (graph) {
+        graph.setMaxDepth(fieldConfig.ancestors.maxDepth ?? 5);
+      }
+    });
   }
 
   /**
@@ -145,11 +249,14 @@ export default class ParentRelationPlugin extends Plugin {
   }
 
   /**
-   * Runs graph diagnostics and logs results.
+   * Runs graph diagnostics and logs results for all graphs.
    */
   runDiagnostics(): void {
-    const diagnostics = this.relationGraph.getDiagnostics();
-    this.logDiagnostics(diagnostics);
+    this.relationGraphs.forEach((graph, fieldName) => {
+      console.log(`[Relations] Diagnostics for field "${fieldName}":`);
+      const diagnostics = graph.getDiagnostics();
+      this.logDiagnostics(diagnostics);
+    });
   }
 
   /**
@@ -227,14 +334,22 @@ export default class ParentRelationPlugin extends Plugin {
     file: TFile,
     options: RelationshipQueryOptions = {}
   ): AncestorQueryResult {
-    const maxDepth = options.maxDepth ?? this.settings.maxDepth;
-    const generations = this.relationshipEngine.getAncestors(file, maxDepth);
+    // Use default field's engine for backward compatibility
+    const defaultEngine = this.relationshipEngines.get(this.settings.defaultParentField);
+    const defaultField = this.settings.parentFields.find(f => f.name === this.settings.defaultParentField);
+
+    if (!defaultEngine || !defaultField) {
+      throw new Error('No default parent field configured');
+    }
+
+    const maxDepth = options.maxDepth ?? defaultField.ancestors.maxDepth ?? 5;
+    const generations = defaultEngine.getAncestors(file, maxDepth);
 
     const totalCount = generations.reduce((sum, gen) => sum + gen.length, 0);
     const depth = generations.length;
 
     // Check if truncated by getting one more generation
-    const oneLevelDeeper = this.relationshipEngine.getAncestors(file, maxDepth + 1);
+    const oneLevelDeeper = defaultEngine.getAncestors(file, maxDepth + 1);
     const wasTruncated = oneLevelDeeper.length > generations.length;
 
     return {
@@ -257,7 +372,12 @@ export default class ParentRelationPlugin extends Plugin {
    * console.log('Parents:', parents.map(f => f.basename));
    */
   getParents(file: TFile): TFile[] {
-    return this.relationGraph.getParents(file);
+    // Use default field's graph for backward compatibility
+    const defaultGraph = this.relationGraphs.get(this.settings.defaultParentField);
+    if (!defaultGraph) {
+      throw new Error('No default parent field configured');
+    }
+    return defaultGraph.getParents(file);
   }
 
   /**
@@ -298,14 +418,22 @@ export default class ParentRelationPlugin extends Plugin {
     file: TFile,
     options: RelationshipQueryOptions = {}
   ): DescendantQueryResult {
-    const maxDepth = options.maxDepth ?? this.settings.maxDepth;
-    const generations = this.relationshipEngine.getDescendants(file, maxDepth);
+    // Use default field's engine for backward compatibility
+    const defaultEngine = this.relationshipEngines.get(this.settings.defaultParentField);
+    const defaultField = this.settings.parentFields.find(f => f.name === this.settings.defaultParentField);
+
+    if (!defaultEngine || !defaultField) {
+      throw new Error('No default parent field configured');
+    }
+
+    const maxDepth = options.maxDepth ?? defaultField.descendants.maxDepth ?? 5;
+    const generations = defaultEngine.getDescendants(file, maxDepth);
 
     const totalCount = generations.reduce((sum, gen) => sum + gen.length, 0);
     const depth = generations.length;
 
     // Check if truncated
-    const oneLevelDeeper = this.relationshipEngine.getDescendants(file, maxDepth + 1);
+    const oneLevelDeeper = defaultEngine.getDescendants(file, maxDepth + 1);
     const wasTruncated = oneLevelDeeper.length > generations.length;
 
     return {
@@ -328,7 +456,12 @@ export default class ParentRelationPlugin extends Plugin {
    * console.log('Children:', children.map(f => f.basename));
    */
   getChildren(file: TFile): TFile[] {
-    return this.relationGraph.getChildren(file);
+    // Use default field's graph for backward compatibility
+    const defaultGraph = this.relationGraphs.get(this.settings.defaultParentField);
+    if (!defaultGraph) {
+      throw new Error('No default parent field configured');
+    }
+    return defaultGraph.getChildren(file);
   }
 
   /**
@@ -369,8 +502,14 @@ export default class ParentRelationPlugin extends Plugin {
     file: TFile,
     options: RelationshipQueryOptions = {}
   ): SiblingQueryResult {
+    // Use default field's engine for backward compatibility
+    const defaultEngine = this.relationshipEngines.get(this.settings.defaultParentField);
+    if (!defaultEngine) {
+      throw new Error('No default parent field configured');
+    }
+
     const includeSelf = options.includeSelf ?? false;
-    const siblings = this.relationshipEngine.getSiblings(file, includeSelf);
+    const siblings = defaultEngine.getSiblings(file, includeSelf);
 
     return {
       file,
@@ -399,8 +538,14 @@ export default class ParentRelationPlugin extends Plugin {
     file: TFile,
     options: RelationshipQueryOptions = {}
   ): CousinQueryResult {
+    // Use default field's engine for backward compatibility
+    const defaultEngine = this.relationshipEngines.get(this.settings.defaultParentField);
+    if (!defaultEngine) {
+      throw new Error('No default parent field configured');
+    }
+
     const degree = options.degree ?? 1;
-    const cousins = this.relationshipEngine.getCousins(file, degree);
+    const cousins = defaultEngine.getCousins(file, degree);
 
     return {
       file,
@@ -467,7 +612,12 @@ export default class ParentRelationPlugin extends Plugin {
    * }
    */
   detectCycle(file: TFile) {
-    return this.relationGraph.detectCycle(file);
+    // Use default field's graph for backward compatibility
+    const defaultGraph = this.relationGraphs.get(this.settings.defaultParentField);
+    if (!defaultGraph) {
+      throw new Error('No default parent field configured');
+    }
+    return defaultGraph.detectCycle(file);
   }
 
   /**
@@ -481,7 +631,12 @@ export default class ParentRelationPlugin extends Plugin {
    * }
    */
   supportsCycleDetection(): boolean {
-    return this.relationGraph.supportsCycleDetection();
+    // Use default field's graph for backward compatibility
+    const defaultGraph = this.relationGraphs.get(this.settings.defaultParentField);
+    if (!defaultGraph) {
+      return false;
+    }
+    return defaultGraph.supportsCycleDetection();
   }
 
   // ========================================
@@ -546,65 +701,197 @@ class ParentRelationSettingTab extends PluginSettingTab {
 
     containerEl.createEl('h2', { text: 'Parent Relation Explorer Settings' });
 
-    new Setting(containerEl)
-      .setName('Parent Field')
-      .setDesc('Frontmatter field name for parent links')
-      .addText(text => text
-        .setPlaceholder('parent')
-        .setValue(this.plugin.settings.parentField)
-        .onChange(async value => {
-          this.plugin.settings.parentField = value;
-          await this.plugin.saveSettings();
-          // Recreate graph with new parent field
-          this.plugin.relationGraph = new RelationGraph(
-            this.app,
-            value,
-            this.plugin.settings.maxDepth
-          );
-          this.plugin.relationGraph.build();
-          // Reinitialize relationship engine
-          this.plugin.relationshipEngine = new RelationshipEngine(this.plugin.relationGraph);
-          // Refresh sidebar views
-          this.plugin.refreshSidebarViews();
-        })
-      );
+    // Parent Fields (comma-separated list)
+    let parentFieldsValue = this.plugin.settings.parentFields.map(f => f.name).join(', ');
 
     new Setting(containerEl)
+      .setName('Parent Fields')
+      .setDesc('Comma-separated list of frontmatter fields to track (e.g., "parent, project, category"). Click "Apply" to save changes.')
+      .addText(text => {
+        text
+          .setPlaceholder('parent, project, category')
+          .setValue(parentFieldsValue)
+          .onChange(value => {
+            // Just store the value, don't trigger rebuild yet
+            parentFieldsValue = value;
+          });
+      })
+      .addButton(button => {
+        button
+          .setButtonText('Apply')
+          .setCta()
+          .onClick(async () => {
+            await this.handleParentFieldsChange(parentFieldsValue);
+          });
+      });
+
+    // Default Parent Field
+    new Setting(containerEl)
+      .setName('Default Parent Field')
+      .setDesc('Which parent field to show by default when opening the sidebar')
+      .addDropdown(dropdown => {
+        this.plugin.settings.parentFields.forEach(field => {
+          dropdown.addOption(field.name, field.displayName || field.name);
+        });
+
+        dropdown
+          .setValue(this.plugin.settings.defaultParentField)
+          .onChange(async value => {
+            this.plugin.settings.defaultParentField = value;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    // UI Style
+    new Setting(containerEl)
+      .setName('UI Style')
+      .setDesc('How to display parent field selector (Auto = segmented control for ≤4 fields, dropdown for >4)')
+      .addDropdown(dropdown => {
+        dropdown
+          .addOption('auto', 'Auto')
+          .addOption('segmented', 'Segmented Control')
+          .addOption('dropdown', 'Dropdown')
+          .setValue(this.plugin.settings.uiStyle)
+          .onChange(async value => {
+            this.plugin.settings.uiStyle = value as 'auto' | 'segmented' | 'dropdown';
+            await this.plugin.saveSettings();
+            this.plugin.refreshSidebarViews();
+          });
+      });
+
+    // Max Depth (global for now, per-field in Milestone 4.2B)
+    new Setting(containerEl)
       .setName('Max Depth')
-      .setDesc('Maximum depth for tree traversal')
+      .setDesc('Maximum depth for tree traversal (applies to all parent fields)')
       .addText(text => text
         .setPlaceholder('5')
-        .setValue(this.plugin.settings.maxDepth.toString())
+        .setValue(this.plugin.settings.parentFields[0]?.ancestors.maxDepth?.toString() || '5')
         .onChange(async value => {
           const num = parseInt(value);
-          if (!isNaN(num)) {
-            this.plugin.settings.maxDepth = num;
+          if (!isNaN(num) && num > 0) {
+            // Update all field configs
+            this.plugin.settings.parentFields.forEach(field => {
+              field.ancestors.maxDepth = num;
+              field.descendants.maxDepth = num;
+            });
             await this.plugin.saveSettings();
-            // Refresh sidebar views
             this.plugin.refreshSidebarViews();
           }
         })
       );
 
+    // Diagnostic Mode
     new Setting(containerEl)
       .setName('Diagnostic Mode')
-      .setDesc('Enable verbose logging for graph validation and diagnostics. Useful for troubleshooting.')
+      .setDesc('Enable verbose logging for graph validation and diagnostics')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.diagnosticMode)
         .onChange(async (value) => {
           this.plugin.settings.diagnosticMode = value;
           await this.plugin.saveSettings();
 
-          // Log status change
           if (value) {
             console.log('[Relations] Diagnostic mode enabled');
-            // Run initial validation
-            const diagnostics = this.plugin.relationGraph.getDiagnostics();
-            this.plugin.logDiagnostics(diagnostics);
+            this.plugin.runDiagnostics();
           } else {
             console.log('[Relations] Diagnostic mode disabled');
           }
         })
       );
+  }
+
+  /**
+   * Handles changes to parent fields list.
+   */
+  private async handleParentFieldsChange(value: string): Promise<void> {
+    const fieldNames = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    if (fieldNames.length === 0) {
+      // Require at least one field
+      new Notice('At least one parent field is required');
+      return;
+    }
+
+    // Check if field names actually changed
+    const currentFieldNames = this.plugin.settings.parentFields.map(f => f.name).sort();
+    const newFieldNames = [...fieldNames].sort();
+
+    if (currentFieldNames.length === newFieldNames.length &&
+        currentFieldNames.every((name, i) => name === newFieldNames[i])) {
+      // No change, skip expensive rebuild
+      return;
+    }
+
+    // Create new field configs
+    const newFields: ParentFieldConfig[] = fieldNames.map(name => {
+      // Try to preserve existing config if field already exists
+      const existingField = this.plugin.settings.parentFields.find(f => f.name === name);
+
+      if (existingField) {
+        return existingField;
+      }
+
+      // Create new field with defaults
+      return {
+        name,
+        displayName: name.charAt(0).toUpperCase() + name.slice(1),
+        ancestors: {
+          displayName: 'Ancestors',
+          visible: true,
+          collapsed: false,
+          maxDepth: 5,
+          initialDepth: 2
+        },
+        descendants: {
+          displayName: 'Descendants',
+          visible: true,
+          collapsed: false,
+          maxDepth: 5,
+          initialDepth: 2
+        },
+        siblings: {
+          displayName: 'Siblings',
+          visible: true,
+          collapsed: false,
+          sortOrder: 'alphabetical' as const,
+          includeSelf: false
+        }
+      };
+    });
+
+    this.plugin.settings.parentFields = newFields;
+
+    // Ensure default field is valid
+    if (!fieldNames.includes(this.plugin.settings.defaultParentField)) {
+      this.plugin.settings.defaultParentField = fieldNames[0];
+    }
+
+    await this.plugin.saveSettings();
+
+    // Rebuild graphs and engines
+    this.plugin.relationGraphs.clear();
+    this.plugin.relationshipEngines.clear();
+
+    this.plugin.settings.parentFields.forEach(fieldConfig => {
+      const graph = new RelationGraph(
+        this.app,
+        fieldConfig.name,
+        fieldConfig.ancestors.maxDepth ?? 5,
+        this.plugin.frontmatterCache
+      );
+
+      const engine = new RelationshipEngine(graph);
+
+      this.plugin.relationGraphs.set(fieldConfig.name, graph);
+      this.plugin.relationshipEngines.set(fieldConfig.name, engine);
+
+      graph.build();
+    });
+
+    // Refresh sidebar
+    this.plugin.refreshSidebarViews();
+
+    // Re-render settings to update dropdown
+    this.display();
   }
 }

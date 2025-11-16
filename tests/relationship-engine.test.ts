@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RelationshipEngine } from '@/relationship-engine';
 import { RelationGraph, NodeInfo } from '@/relation-graph';
 import { CycleDetector } from '@/cycle-detector';
+import { FrontmatterCache } from '@/frontmatter-cache';
 import { TFile, App } from 'obsidian';
 
 /**
@@ -33,7 +34,8 @@ function createMockGraph(edges: [string, string][], maxDepth: number = 5): Relat
     },
   } as any;
 
-  const graph = new RelationGraph(mockApp, 'parent', maxDepth);
+  const frontmatterCache = new FrontmatterCache(mockApp);
+  const graph = new RelationGraph(mockApp, 'parent', maxDepth, frontmatterCache);
 
   // Build file map
   const fileMap = new Map<string, TFile>();
