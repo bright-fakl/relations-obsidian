@@ -462,41 +462,41 @@ export class ContextMenuBuilder {
 	private addRelationshipActions(menu: Menu, context: AdvancedMenuContext): void {
 		const { section, parentFieldDisplayName, isCurrentParent, isCurrentChild } = context;
 
-		// "Set as [Field] parent" - Only if NOT already a parent
+		// "Set as [Field]" - Only if NOT already a parent
 		if ((section === 'ancestors' || section === 'siblings') && !isCurrentParent) {
 			menu.addItem(item => {
 				item
-					.setTitle(`Set as ${parentFieldDisplayName} parent`)
+					.setTitle(`Set as ${parentFieldDisplayName}`)
 					.setIcon('arrow-up')
 					.onClick(() => this.handleSetAsParent(context));
 			});
 		}
 
-		// "Remove as [Field] parent" - Only if IS a parent
+		// "Remove as [Field]" - Only if IS a parent
 		if ((section === 'ancestors' || section === 'siblings') && isCurrentParent) {
 			menu.addItem(item => {
 				item
-					.setTitle(`Remove as ${parentFieldDisplayName} parent`)
+					.setTitle(`Remove as ${parentFieldDisplayName}`)
 					.setIcon('x')
 					.onClick(() => this.handleRemoveAsParent(context));
 			});
 		}
 
-		// "Set as [Field] child" - For descendants (only if NOT a child) and siblings (always)
+		// "Set as Child" - For descendants (only if NOT a child) and siblings (always)
 		if ((section === 'descendants' && !isCurrentChild) || section === 'siblings') {
 			menu.addItem(item => {
 				item
-					.setTitle(`Set as ${parentFieldDisplayName} child`)
+					.setTitle('Set as Child')
 					.setIcon('arrow-down')
 					.onClick(() => this.handleSetAsChild(context));
 			});
 		}
 
-		// "Remove as [Field] child" - Only if current file IS the parent of this node
+		// "Remove as Child" - Only if current file IS the parent of this node
 		if (section === 'descendants' && isCurrentChild) {
 			menu.addItem(item => {
 				item
-					.setTitle(`Remove as ${parentFieldDisplayName} child`)
+					.setTitle('Remove as Child')
 					.setIcon('x')
 					.onClick(() => this.handleRemoveAsChild(context));
 			});
@@ -531,11 +531,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Added as ${parentFieldDisplayName} parent`);
+			new Notice(`Added as ${parentFieldDisplayName}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to add parent: ${result.error}`);
+			new Notice(`Failed to add ${parentFieldDisplayName}: ${result.error}`);
 		}
 	}
 
@@ -568,11 +568,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Added as ${parentFieldDisplayName} child of "${file.basename}"`);
+			new Notice(`Added as child of "${file.basename}"`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to add child: ${result.error}`);
+			new Notice(`Failed to add as child: ${result.error}`);
 		}
 	}
 
@@ -594,8 +594,8 @@ export class ContextMenuBuilder {
 
 		// Confirm destructive action
 		const confirmed = await this.confirmAction(
-			'Remove Parent Relationship',
-			`Remove "${file.basename}" as a ${parentFieldDisplayName} parent?`
+			'Remove Relationship',
+			`Remove "${file.basename}" as ${parentFieldDisplayName}?`
 		);
 
 		if (!confirmed) return;
@@ -612,11 +612,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Removed as ${parentFieldDisplayName} parent`);
+			new Notice(`Removed as ${parentFieldDisplayName}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to remove parent: ${result.error}`);
+			new Notice(`Failed to remove ${parentFieldDisplayName}: ${result.error}`);
 		}
 	}
 
@@ -638,8 +638,8 @@ export class ContextMenuBuilder {
 
 		// Confirm destructive action
 		const confirmed = await this.confirmAction(
-			'Remove Child Relationship',
-			`Remove current note as a ${parentFieldDisplayName} child of "${file.basename}"?`
+			'Remove Relationship',
+			`Remove current note as a child of "${file.basename}"?`
 		);
 
 		if (!confirmed) return;
@@ -656,11 +656,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			new Notice(`Removed as ${parentFieldDisplayName} child`);
+			new Notice('Removed as child');
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
-			new Notice(`Failed to remove child: ${result.error}`);
+			new Notice(`Failed to remove as child: ${result.error}`);
 		}
 	}
 
