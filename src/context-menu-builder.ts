@@ -27,6 +27,12 @@ export interface NodeMenuContext {
 	/** Display name of the section */
 	sectionDisplayName: string;
 
+	/** Display name of the ancestors section (for siblings menu) */
+	ancestorsSectionDisplayName?: string;
+
+	/** Display name of the descendants section (for siblings menu) */
+	descendantsSectionDisplayName?: string;
+
 	/** Reference to the sidebar instance */
 	sidebarView: RelationSidebarView;
 
@@ -480,48 +486,77 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private addRelationshipActions(menu: Menu, context: AdvancedMenuContext): void {
-		const { section, sectionDisplayName, isCurrentParent, isCurrentChild } = context;
+		const { section, sectionDisplayName, ancestorsSectionDisplayName, descendantsSectionDisplayName, isCurrentParent, isCurrentChild } = context;
 
-		// Convert section name to singular for menu labels
+		// Convert section name to singular for menu labels (ancestors/descendants only)
 		const singularSectionName = this.singularize(sectionDisplayName);
 
-		// "Set as [SectionName]" - Only if NOT already a parent
-		if ((section === 'ancestors' || section === 'siblings') && !isCurrentParent) {
-			menu.addItem(item => {
-				item
-					.setTitle(`Set as ${singularSectionName}`)
-					.setIcon('arrow-up')
-					.onClick(() => this.handleSetAsParent(context));
-			});
+		// For ancestors section: "Set as Ancestor" / "Remove as Ancestor"
+		if (section === 'ancestors') {
+			if (!isCurrentParent) {
+				menu.addItem(item => {
+					item
+						.setTitle(`Set as ${singularSectionName}`)
+						.setIcon('arrow-up')
+						.onClick(() => this.handleSetAsParent(context));
+				});
+			}
+			if (isCurrentParent) {
+				menu.addItem(item => {
+					item
+						.setTitle(`Remove as ${singularSectionName}`)
+						.setIcon('x')
+						.onClick(() => this.handleRemoveAsParent(context));
+				});
+			}
 		}
 
-		// "Remove as [SectionName]" - Only if IS a parent
-		if ((section === 'ancestors' || section === 'siblings') && isCurrentParent) {
-			menu.addItem(item => {
-				item
-					.setTitle(`Remove as ${singularSectionName}`)
-					.setIcon('x')
-					.onClick(() => this.handleRemoveAsParent(context));
-			});
+		// For descendants section: "Set as Descendant" / "Remove as Descendant"
+		if (section === 'descendants') {
+			if (!isCurrentChild) {
+				menu.addItem(item => {
+					item
+						.setTitle(`Set as ${singularSectionName}`)
+						.setIcon('arrow-down')
+						.onClick(() => this.handleSetAsChild(context));
+				});
+			}
+			if (isCurrentChild) {
+				menu.addItem(item => {
+					item
+						.setTitle(`Remove as ${singularSectionName}`)
+						.setIcon('x')
+						.onClick(() => this.handleRemoveAsChild(context));
+				});
+			}
 		}
 
-		// "Set as [SectionName]" - For descendants (only if NOT a child) and siblings (always)
-		if ((section === 'descendants' && !isCurrentChild) || section === 'siblings') {
+		// For siblings section: use ancestor/descendant display names
+		if (section === 'siblings') {
+			const ancestorLabel = ancestorsSectionDisplayName ? this.singularize(ancestorsSectionDisplayName) : 'Parent';
+			const descendantLabel = descendantsSectionDisplayName ? this.singularize(descendantsSectionDisplayName) : 'Child';
+
+			if (!isCurrentParent) {
+				menu.addItem(item => {
+					item
+						.setTitle(`Set as ${ancestorLabel}`)
+						.setIcon('arrow-up')
+						.onClick(() => this.handleSetAsParent(context));
+				});
+			}
+			if (isCurrentParent) {
+				menu.addItem(item => {
+					item
+						.setTitle(`Remove as ${ancestorLabel}`)
+						.setIcon('x')
+						.onClick(() => this.handleRemoveAsParent(context));
+				});
+			}
 			menu.addItem(item => {
 				item
-					.setTitle(`Set as ${singularSectionName}`)
+					.setTitle(`Set as ${descendantLabel}`)
 					.setIcon('arrow-down')
 					.onClick(() => this.handleSetAsChild(context));
-			});
-		}
-
-		// "Remove as [SectionName]" - Only if current file IS the parent of this node
-		if (section === 'descendants' && isCurrentChild) {
-			menu.addItem(item => {
-				item
-					.setTitle(`Remove as ${singularSectionName}`)
-					.setIcon('x')
-					.onClick(() => this.handleRemoveAsChild(context));
 			});
 		}
 	}
@@ -534,7 +569,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleSetAsParent(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, section, sectionDisplayName, ancestorsSectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -554,8 +589,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			const singularName = this.singularize(sectionDisplayName);
-			new Notice(`Added as ${singularName}`);
+			// Use ancestor label for siblings section, singular section name for ancestors
+			const label = section === 'siblings'
+				? (ancestorsSectionDisplayName ? this.singularize(ancestorsSectionDisplayName) : 'Parent')
+				: this.singularize(sectionDisplayName);
+			new Notice(`Added as ${label}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
@@ -572,7 +610,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleSetAsChild(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, section, sectionDisplayName, descendantsSectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -592,8 +630,11 @@ export class ContextMenuBuilder {
 		);
 
 		if (result.success) {
-			const singularName = this.singularize(sectionDisplayName);
-			new Notice(`Added as ${singularName}`);
+			// Use descendant label for siblings section, singular section name for descendants
+			const label = section === 'siblings'
+				? (descendantsSectionDisplayName ? this.singularize(descendantsSectionDisplayName) : 'Child')
+				: this.singularize(sectionDisplayName);
+			new Notice(`Added as ${label}`);
 			// Trigger sidebar refresh
 			sidebarView.refresh();
 		} else {
@@ -609,7 +650,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleRemoveAsParent(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, section, sectionDisplayName, ancestorsSectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -617,7 +658,10 @@ export class ContextMenuBuilder {
 			return;
 		}
 
-		const singularName = this.singularize(sectionDisplayName);
+		// Use ancestor label for siblings section, singular section name for ancestors
+		const singularName = section === 'siblings'
+			? (ancestorsSectionDisplayName ? this.singularize(ancestorsSectionDisplayName) : 'Parent')
+			: this.singularize(sectionDisplayName);
 
 		// Confirm destructive action
 		const confirmed = await this.confirmAction(
@@ -655,7 +699,7 @@ export class ContextMenuBuilder {
 	 * @param context - The advanced menu context
 	 */
 	private async handleRemoveAsChild(context: AdvancedMenuContext): Promise<void> {
-		const { file, frontmatterEditor, parentField, sectionDisplayName, sidebarView } = context;
+		const { file, frontmatterEditor, parentField, section, sectionDisplayName, descendantsSectionDisplayName, sidebarView } = context;
 		const currentFile = this.app.workspace.getActiveFile();
 
 		if (!currentFile) {
@@ -663,7 +707,10 @@ export class ContextMenuBuilder {
 			return;
 		}
 
-		const singularName = this.singularize(sectionDisplayName);
+		// Use descendant label for siblings section, singular section name for descendants
+		const singularName = section === 'siblings'
+			? (descendantsSectionDisplayName ? this.singularize(descendantsSectionDisplayName) : 'Child')
+			: this.singularize(sectionDisplayName);
 
 		// Confirm destructive action
 		const confirmed = await this.confirmAction(
