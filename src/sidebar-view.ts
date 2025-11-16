@@ -77,7 +77,7 @@ export class RelationSidebarView extends ItemView {
 			enableContextMenu: true,
 			showCycleIndicators: true,
 			cssPrefix: 'relation-tree'
-		});
+		}, this.plugin);
 
 		// Connect context menu builder to renderer
 		this.renderer.setContextMenuBuilder(this.contextMenuBuilder);
@@ -561,6 +561,9 @@ export class RelationSidebarView extends ItemView {
 					section: sectionType,
 					parentField: this.viewState.selectedParentField,
 					parentFieldDisplayName: fieldConfig.displayName || fieldConfig.name,
+					sectionDisplayName: sectionConfig.displayName || sectionType,
+					ancestorsSectionDisplayName: fieldConfig.ancestors.displayName || 'ancestors',
+					descendantsSectionDisplayName: fieldConfig.descendants.displayName || 'descendants',
 					sidebarView: this
 				};
 
@@ -647,6 +650,45 @@ export class RelationSidebarView extends ItemView {
 					targetEl: name,
 					linktext: sibling.path
 				});
+			});
+
+			// Context menu (right-click)
+			item.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+
+				// Create a simple TreeNode for the sibling
+				const siblingNode: TreeNode = {
+					file: sibling,
+					children: [],
+					depth: 0,
+					isCycle: false,
+					metadata: {}
+				};
+
+				// Get current parent field info
+				const fieldConfig = this.plugin.settings.parentFields.find(
+					f => f.name === this.viewState.selectedParentField
+				);
+
+				// Build context menu context
+				const menuContext = {
+					node: siblingNode,
+					file: sibling,
+					section: 'siblings' as const,
+					parentField: this.viewState.selectedParentField,
+					parentFieldDisplayName: fieldConfig?.displayName || this.viewState.selectedParentField,
+					sectionDisplayName: sectionConfig.displayName || 'siblings',
+					ancestorsSectionDisplayName: fieldConfig?.ancestors.displayName || 'ancestors',
+					descendantsSectionDisplayName: fieldConfig?.descendants.displayName || 'descendants',
+					sidebarView: this,
+					isPinned: this.isPinnedToCurrentField(),
+					targetElement: item,
+					event: e
+				};
+
+				// Show context menu
+				this.contextMenuBuilder.showContextMenu(menuContext);
 			});
 		});
 	}

@@ -2,6 +2,7 @@ import { TFile, App } from 'obsidian';
 import { TreeNode } from './tree-model';
 import { ContextMenuBuilder } from './context-menu-builder';
 import type { RelationSidebarView } from './sidebar-view';
+import type ParentRelationPlugin from './main';
 
 /**
  * Configuration options for tree rendering
@@ -49,6 +50,15 @@ export interface TreeRenderContext {
 	/** Display name of the parent field */
 	parentFieldDisplayName?: string;
 
+	/** Display name of the section */
+	sectionDisplayName?: string;
+
+	/** Display name of the ancestors section (for siblings menu) */
+	ancestorsSectionDisplayName?: string;
+
+	/** Display name of the descendants section (for siblings menu) */
+	descendantsSectionDisplayName?: string;
+
 	/** Reference to the sidebar view */
 	sidebarView?: RelationSidebarView;
 }
@@ -76,11 +86,14 @@ export class TreeRenderer {
 	private nodeStates: Map<string, NodeState> = new Map();
 	private contextMenuBuilder?: ContextMenuBuilder;
 	private renderContext?: TreeRenderContext;
+	private plugin?: ParentRelationPlugin;
 
 	constructor(
 		private app: App,
-		options: TreeRendererOptions = {}
+		options: TreeRendererOptions = {},
+		plugin?: ParentRelationPlugin
 	) {
+		this.plugin = plugin;
 		// Set defaults
 		this.options = {
 			collapsible: options.collapsible ?? true,
@@ -396,6 +409,11 @@ export class TreeRenderer {
 			e.preventDefault();
 			e.stopPropagation();
 
+			// Track this click for command palette commands (Milestone 4.3B Phase 4)
+			if (this.plugin && this.renderContext?.parentField) {
+				this.plugin.setLastClickedFile(file, this.renderContext.parentField);
+			}
+
 			// Check for modifier keys for different open modes
 			const newLeaf = e.ctrlKey || e.metaKey;
 
@@ -517,6 +535,11 @@ export class TreeRenderer {
 			const nodeData = this.getNodeDataFromElement(nodeEl);
 			if (!nodeData) return;
 
+			// Track this click for command palette commands (Milestone 4.3B Phase 4)
+			if (this.plugin && context.parentField) {
+				this.plugin.setLastClickedFile(nodeData.file, context.parentField);
+			}
+
 			// Build menu context
 			const menuContext = {
 				node: nodeData.node,
@@ -524,6 +547,9 @@ export class TreeRenderer {
 				section: context.section || 'ancestors',
 				parentField: context.parentField || '',
 				parentFieldDisplayName: context.parentFieldDisplayName || '',
+				sectionDisplayName: context.sectionDisplayName || '',
+				ancestorsSectionDisplayName: context.ancestorsSectionDisplayName,
+				descendantsSectionDisplayName: context.descendantsSectionDisplayName,
 				sidebarView: context.sidebarView!,
 				isPinned: context.sidebarView?.isPinnedToCurrentField() || false,
 				targetElement: nodeEl,
@@ -550,6 +576,11 @@ export class TreeRenderer {
 				const nodeData = this.getNodeDataFromElement(nodeEl);
 				if (!nodeData) return;
 
+				// Track this click for command palette commands (Milestone 4.3B Phase 4)
+				if (this.plugin && context.parentField) {
+					this.plugin.setLastClickedFile(nodeData.file, context.parentField);
+				}
+
 				// Build menu context (without mouse event)
 				const menuContext = {
 					node: nodeData.node,
@@ -557,6 +588,9 @@ export class TreeRenderer {
 					section: context.section || 'ancestors',
 					parentField: context.parentField || '',
 					parentFieldDisplayName: context.parentFieldDisplayName || '',
+					sectionDisplayName: context.sectionDisplayName || '',
+					ancestorsSectionDisplayName: context.ancestorsSectionDisplayName,
+					descendantsSectionDisplayName: context.descendantsSectionDisplayName,
 					sidebarView: context.sidebarView!,
 					isPinned: context.sidebarView?.isPinnedToCurrentField() || false,
 					targetElement: nodeEl
@@ -594,6 +628,251 @@ export class TreeRenderer {
 			node: nodeData,
 			file
 		};
+	}
+
+	/**
+	 * Expands all descendants of a node.
+	 *
+	 * @param filePath - Path of the node to expand all children for
+	 */
+	expandAllChildren(filePath: string): void {
+		console.log('[TreeRenderer] expandAllChildren called for:', filePath);
+		console.log('[TreeRenderer] nodeStates size:', this.nodeStates.size);
+
+		const state = this.nodeStates.get(filePath);
+		if (!state) {
+			console.warn('[TreeRenderer] No state found for:', filePath);
+			return;
+		}
+
+		// First expand the node itself if it's collapsed
+		if (state.collapsed) {
+			state.collapsed = false;
+			state.element.classList.remove(`${this.options.cssPrefix}-collapsed`);
+
+			// Update toggle icon
+			const toggleEl = state.element.parentElement?.querySelector(
+				`[data-file-path="${filePath}"]`
+			) as HTMLElement;
+			if (toggleEl) {
+				this.updateToggleIcon(toggleEl, false);
+				toggleEl.setAttribute('aria-expanded', 'true');
+			}
+		}
+
+		// Recursively expand all descendants
+		this.expandAllDescendants(filePath);
+	}
+
+	/**
+	 * Recursively expands all descendants of a node.
+	 *
+	 * @param filePath - Parent node path
+	 */
+	private expandAllDescendants(filePath: string): void {
+		const parentState = this.nodeStates.get(filePath);
+		if (!parentState || !parentState.element) {
+			console.warn('[TreeRenderer] Invalid parent state for:', filePath);
+			return;
+		}
+
+		let expandedCount = 0;
+		// Get all node states that are descendants of this path
+		for (const [path, state] of this.nodeStates.entries()) {
+			if (path === filePath) continue;
+			if (!state.element) continue;
+
+			// Check if element is a descendant in the DOM
+			if (parentState.element.contains(state.element)) {
+				if (state.collapsed) {
+					state.collapsed = false;
+					state.element.classList.remove(`${this.options.cssPrefix}-collapsed`);
+
+					// Update toggle icon
+					const toggleEl = state.element.parentElement?.querySelector(
+						`[data-file-path="${path}"]`
+					) as HTMLElement;
+					if (toggleEl) {
+						this.updateToggleIcon(toggleEl, false);
+						toggleEl.setAttribute('aria-expanded', 'true');
+					}
+					expandedCount++;
+				}
+			}
+		}
+		console.log('[TreeRenderer] Expanded', expandedCount, 'descendants');
+	}
+
+	/**
+	 * Collapses all descendants of a node.
+	 *
+	 * @param filePath - Path of the node to collapse all children for
+	 */
+	collapseAllChildren(filePath: string): void {
+		console.log('[TreeRenderer] collapseAllChildren called for:', filePath);
+		console.log('[TreeRenderer] nodeStates size:', this.nodeStates.size);
+
+		const state = this.nodeStates.get(filePath);
+		if (!state) {
+			console.warn('[TreeRenderer] No state found for:', filePath);
+			return;
+		}
+
+		// First, recursively collapse all descendants (so they're collapsed when re-expanded)
+		this.collapseAllDescendants(filePath);
+
+		// Then collapse the node itself (this hides all its children)
+		if (!state.collapsed) {
+			state.collapsed = true;
+			state.element.classList.add(`${this.options.cssPrefix}-collapsed`);
+
+			// Update toggle icon
+			const toggleEl = state.element.parentElement?.querySelector(
+				`[data-file-path="${filePath}"]`
+			) as HTMLElement;
+			if (toggleEl) {
+				this.updateToggleIcon(toggleEl, true);
+				toggleEl.setAttribute('aria-expanded', 'false');
+			}
+			console.log('[TreeRenderer] Collapsed node itself:', filePath);
+		}
+	}
+
+	/**
+	 * Recursively collapses all descendants of a node.
+	 *
+	 * @param filePath - Parent node path
+	 */
+	private collapseAllDescendants(filePath: string): void {
+		const parentState = this.nodeStates.get(filePath);
+		if (!parentState || !parentState.element) {
+			console.warn('[TreeRenderer] Invalid parent state for:', filePath);
+			return;
+		}
+
+		let collapsedCount = 0;
+		// Get all node states that are descendants of this path
+		for (const [path, state] of this.nodeStates.entries()) {
+			if (path === filePath) continue;
+			if (!state.element) continue;
+
+			// Check if element is a descendant in the DOM
+			if (parentState.element.contains(state.element)) {
+				if (!state.collapsed) {
+					state.collapsed = true;
+					state.element.classList.add(`${this.options.cssPrefix}-collapsed`);
+
+					// Update toggle icon
+					const toggleEl = state.element.parentElement?.querySelector(
+						`[data-file-path="${path}"]`
+					) as HTMLElement;
+					if (toggleEl) {
+						this.updateToggleIcon(toggleEl, true);
+						toggleEl.setAttribute('aria-expanded', 'false');
+					}
+					collapsedCount++;
+				}
+			}
+		}
+		console.log('[TreeRenderer] Collapsed', collapsedCount, 'descendants');
+	}
+
+	/**
+	 * Expands all ancestors to make a specific node visible and scrolls to it.
+	 *
+	 * @param filePath - Path of the node to expand to
+	 */
+	expandToNode(filePath: string): void {
+		const targetState = this.nodeStates.get(filePath);
+		if (!targetState) return;
+
+		// Find all ancestor paths by traversing up the DOM
+		const ancestorPaths: string[] = [];
+		let currentElement = targetState.element.parentElement;
+
+		while (currentElement) {
+			// Check if this element is a children container
+			if (currentElement.classList.contains(`${this.options.cssPrefix}-children`)) {
+				// Find the parent node content
+				const parentContainer = currentElement.parentElement;
+				if (parentContainer) {
+					const nodeContent = parentContainer.querySelector(`.${this.options.cssPrefix}-node-content`);
+					if (nodeContent) {
+						const path = nodeContent.getAttribute('data-path');
+						if (path) {
+							ancestorPaths.push(path);
+						}
+					}
+				}
+			}
+			currentElement = currentElement.parentElement;
+		}
+
+		// Expand all ancestors
+		for (const ancestorPath of ancestorPaths) {
+			const state = this.nodeStates.get(ancestorPath);
+			if (state && state.collapsed) {
+				state.collapsed = false;
+				state.element.classList.remove(`${this.options.cssPrefix}-collapsed`);
+
+				// Update toggle icon
+				const toggleEl = state.element.parentElement?.querySelector(
+					`[data-file-path="${ancestorPath}"]`
+				) as HTMLElement;
+				if (toggleEl) {
+					this.updateToggleIcon(toggleEl, false);
+					toggleEl.setAttribute('aria-expanded', 'true');
+				}
+			}
+		}
+
+		// Scroll to the node
+		this.scrollToNode(filePath);
+	}
+
+	/**
+	 * Scrolls to make a node visible with smooth animation.
+	 *
+	 * @param filePath - Path of the node to scroll to
+	 */
+	private scrollToNode(filePath: string): void {
+		const state = this.nodeStates.get(filePath);
+		if (!state || !state.element) return;
+
+		// Find the node content element
+		const nodeContent = state.element.parentElement?.querySelector(
+			`.${this.options.cssPrefix}-node-content`
+		) as HTMLElement;
+
+		if (nodeContent) {
+			// Scroll with smooth behavior
+			nodeContent.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest',
+				inline: 'nearest'
+			});
+
+			// Add a highlight effect
+			nodeContent.classList.add(`${this.options.cssPrefix}-highlight`);
+			setTimeout(() => {
+				nodeContent.classList.remove(`${this.options.cssPrefix}-highlight`);
+			}, 2000);
+		}
+	}
+
+	/**
+	 * Finds the DOM element for a given file path.
+	 *
+	 * @param filePath - Path of the file to find
+	 * @returns The DOM element or null if not found
+	 */
+	findNodeElement(filePath: string): HTMLElement | null {
+		const state = this.nodeStates.get(filePath);
+		if (!state || !state.element) return null;
+
+		return state.element.parentElement?.querySelector(
+			`.${this.options.cssPrefix}-node-content`
+		) as HTMLElement | null;
 	}
 
 	/**

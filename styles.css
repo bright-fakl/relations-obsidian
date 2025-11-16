@@ -671,3 +671,88 @@
 .relation-tree-container .relation-tree-node-content[tabindex]:hover {
 	background-color: var(--background-modifier-hover);
 }
+
+/* Highlight effect for scrolling to nodes */
+.relation-tree-highlight {
+	animation: relation-tree-highlight-pulse 2s ease-out;
+}
+
+@keyframes relation-tree-highlight-pulse {
+	0% {
+		background-color: var(--text-selection);
+	}
+	100% {
+		background-color: transparent;
+	}
+}
+
+/* ============================================
+   Confirmation Modal Styles (Milestone 4.3B)
+   ============================================ */
+
+/* Modal Container */
+.relation-confirmation-modal {
+	padding: 24px;
+}
+
+.relation-confirmation-modal h2 {
+	margin-top: 0;
+	margin-bottom: 16px;
+	color: var(--text-normal);
+	font-size: 1.2em;
+	font-weight: 600;
+}
+
+/* Modal Message */
+.relation-confirmation-message {
+	margin-bottom: 20px;
+	color: var(--text-normal);
+	font-size: var(--font-ui-medium);
+	line-height: 1.5;
+}
+
+/* Button Container */
+.relation-confirmation-modal .modal-button-container {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	margin-top: 24px;
+}
+
+.relation-confirmation-modal .modal-button-container button {
+	margin: 0;
+	padding: 8px 16px;
+	font-size: var(--font-ui-small);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+/* Cancel Button */
+.relation-confirmation-modal button.mod-secondary {
+	background-color: var(--background-modifier-border);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.relation-confirmation-modal button.mod-secondary:hover {
+	background-color: var(--background-modifier-border-hover);
+	border-color: var(--background-modifier-border-hover);
+}
+
+/* Confirm Button (Warning Style) */
+.relation-confirmation-modal button.mod-warning {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+}
+
+.relation-confirmation-modal button.mod-warning:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* Focus States */
+.relation-confirmation-modal button:focus {
+	outline: 2px solid var(--background-modifier-border-focus);
+	outline-offset: 2px;
+}

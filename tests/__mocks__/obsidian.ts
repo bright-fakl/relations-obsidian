@@ -62,6 +62,26 @@ export class Notice {
 	constructor(public message: string, public timeout?: number) {}
 }
 
+// Mock Modal class
+export class Modal {
+	app: App;
+	titleEl: HTMLElement = document.createElement('div');
+	contentEl: HTMLElement = document.createElement('div');
+	modalEl: HTMLElement = document.createElement('div');
+
+	constructor(app: App) {
+		this.app = app;
+	}
+
+	open(): void {}
+
+	close(): void {}
+
+	onOpen(): void {}
+
+	onClose(): void {}
+}
+
 // Mock App class
 export class App {
 	workspace: any = {
