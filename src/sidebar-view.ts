@@ -514,11 +514,16 @@ export class RelationSidebarView extends ItemView {
 
 			// Check if tree has any children (ancestors/descendants exist)
 			if (tree && tree.children && tree.children.length > 0) {
+				// Add tree container class for styling
+				content.classList.add(`${this.renderer['options'].cssPrefix}-container`);
+
 				// Render only the children, not the root node (current file)
 				// Adjust depth to remove indentation from skipped root
 				tree.children.forEach(childNode => {
 					const adjustedNode = this.adjustTreeDepth(childNode, -1);
-					this.renderer.render(adjustedNode, content);
+					// Use renderNode() directly to preserve collapse state across multiple nodes
+					const nodeElement = this.renderer['renderNode'](adjustedNode, 0);
+					content.appendChild(nodeElement);
 				});
 			} else {
 				// Show empty message for this section
