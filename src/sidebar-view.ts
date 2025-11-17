@@ -429,29 +429,23 @@ export class RelationSidebarView extends ItemView {
 				return;
 			}
 
-			// Render reference note header (current file with pin button)
-			this.renderReferenceNote(file);
+		// Get section order (use default if not set)
+		const sectionOrder = fieldConfig.sectionOrder || ['reference', 'roots', 'ancestors', 'descendants', 'siblings'];
 
-
-			// Render roots section
-			if (fieldConfig.roots.visible) {
+		// Render sections in the configured order
+		sectionOrder.forEach(sectionKey => {
+			if (sectionKey === 'reference') {
+				this.renderReferenceNote(file);
+			} else if (sectionKey === 'roots' && fieldConfig.roots.visible) {
 				this.renderSection('roots', file, fieldConfig, engine, graph);
-			}
-
-			// Render ancestors section
-			if (fieldConfig.ancestors.visible) {
+			} else if (sectionKey === 'ancestors' && fieldConfig.ancestors.visible) {
 				this.renderSection('ancestors', file, fieldConfig, engine, graph);
-			}
-
-			// Render descendants section
-			if (fieldConfig.descendants.visible) {
+			} else if (sectionKey === 'descendants' && fieldConfig.descendants.visible) {
 				this.renderSection('descendants', file, fieldConfig, engine, graph);
-			}
-
-			// Render siblings section
-			if (fieldConfig.siblings.visible) {
+			} else if (sectionKey === 'siblings' && fieldConfig.siblings.visible) {
 				this.renderSection('siblings', file, fieldConfig, engine, graph);
 			}
+		});
 
 		} catch (error) {
 			console.error('[Relation Explorer] Error rendering tree:', error);

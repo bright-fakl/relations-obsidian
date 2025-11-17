@@ -153,6 +153,9 @@ export interface ParentFieldConfig {
   /** Optional friendly display name for UI (e.g., "Project Hierarchy") */
   displayName?: string;
 
+  /** Order in which sections are displayed in the sidebar */
+  sectionOrder?: ('reference' | 'roots' | 'ancestors' | 'descendants' | 'siblings')[];
+
   /** Roots section configuration */
   roots: SectionConfig;
 
@@ -202,6 +205,7 @@ export const DEFAULT_SECTION_CONFIG: SectionConfig = {
 export const DEFAULT_PARENT_FIELD_CONFIG: ParentFieldConfig = {
   name: 'parent',
   displayName: 'Parent',
+  sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
   roots: {
     ...DEFAULT_SECTION_CONFIG,
     displayName: 'Root Notes',

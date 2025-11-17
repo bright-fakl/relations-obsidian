@@ -14,6 +14,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -51,6 +52,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'project',
       displayName: 'Project',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -82,6 +84,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'category',
       displayName: 'Category',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -119,6 +122,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent Topic',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -156,6 +160,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -193,6 +198,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -224,6 +230,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'project',
       displayName: 'Project',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
@@ -255,6 +262,7 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'topic',
       displayName: 'Topic',
+      sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
       roots: {
         displayName: 'Root Notes',
         visible: true,
