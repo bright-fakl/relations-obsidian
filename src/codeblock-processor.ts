@@ -187,7 +187,7 @@ export class CodeblockProcessor {
 			}
 
 			// Render tree
-			this.renderTree(el, finalTree, params, truncatedCount, filterFunction !== null, targetFile);
+			this.renderTree(el, finalTree, params, truncatedCount, filterFunction !== null, targetFile, fieldName);
 
 		} catch (error) {
 			if (error instanceof CodeblockValidationError) {
@@ -277,6 +277,7 @@ export class CodeblockProcessor {
 	 * @param truncatedCount - Number of nodes truncated (0 if none)
 	 * @param hasFilters - Whether filters are active
 	 * @param targetFile - Target file for the tree (used in title)
+	 * @param fieldName - Name of the parent field being displayed
 	 */
 	private renderTree(
 		container: HTMLElement,
@@ -284,7 +285,8 @@ export class CodeblockProcessor {
 		params: CodeblockParams,
 		truncatedCount: number = 0,
 		hasFilters: boolean = false,
-		targetFile?: TFile
+		targetFile?: TFile,
+		fieldName?: string
 	): void {
 		container.empty();
 		container.addClass('relation-codeblock-container');
@@ -306,7 +308,7 @@ export class CodeblockProcessor {
 
 		// Render title if requested
 		if (params.title && params.title !== 'none') {
-			this.renderTitle(container, params, hasFilters, targetFile);
+			this.renderTitle(container, params, hasFilters, targetFile, fieldName);
 		}
 
 		// Handle empty result
@@ -357,27 +359,53 @@ export class CodeblockProcessor {
 	 * @param params - Codeblock parameters
 	 * @param hasFilters - Whether filters are active
 	 * @param targetFile - Target file for the tree
+	 * @param fieldName - Name of the parent field being displayed
 	 */
 	private renderTitle(
 		container: HTMLElement,
 		params: CodeblockParams,
 		hasFilters: boolean,
-		targetFile?: TFile
+		targetFile?: TFile,
+		fieldName?: string
 	): void {
 		const titleEl = container.createDiv('relation-codeblock-title');
 
+		// Get display name for the relation type from configured settings
+		let typeName: string;
+		const actualFieldName = fieldName || this.plugin.settings.defaultParentField;
+		const fieldConfig = this.plugin.settings.parentFields.find(f => f.name === actualFieldName);
+
+		if (fieldConfig) {
+			// Use configured display name for the section
+			switch (params.type) {
+				case 'ancestors':
+					typeName = fieldConfig.ancestors.displayName;
+					break;
+				case 'descendants':
+					typeName = fieldConfig.descendants.displayName;
+					break;
+				case 'siblings':
+					typeName = fieldConfig.siblings.displayName;
+					break;
+				case 'cousins':
+					// Cousins doesn't have its own section, use a sensible default
+					typeName = 'Cousins';
+					break;
+			}
+		} else {
+			// Fallback to capitalized type name if config not found
+			typeName = params.type.charAt(0).toUpperCase() + params.type.slice(1);
+		}
+
 		// Generate title text based on mode
 		let titleText = '';
+		const noteName = targetFile?.basename || params.note || 'Current note';
 
 		if (params.title === 'simple') {
 			// Simple mode: "Descendants of Note"
-			const typeName = params.type.charAt(0).toUpperCase() + params.type.slice(1);
-			const noteName = targetFile?.basename || params.note || 'Current note';
 			titleText = `${typeName} of ${noteName}`;
 		} else if (params.title === 'detailed') {
 			// Detailed mode: Include filtering information
-			const typeName = params.type.charAt(0).toUpperCase() + params.type.slice(1);
-			const noteName = targetFile?.basename || params.note || 'Current note';
 			titleText = `${typeName} of ${noteName}`;
 
 			// Add filter details
