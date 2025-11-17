@@ -14,6 +14,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Ancestors',
         visible: true,
@@ -45,6 +51,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'project',
       displayName: 'Project',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Program / Portfolio',
         visible: true,
@@ -70,6 +82,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'category',
       displayName: 'Category',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Parent Categories',
         visible: true,
@@ -101,6 +119,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent Topic',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Parent Chain',
         visible: true,
@@ -132,6 +156,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Up',
         visible: true,
@@ -163,6 +193,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'parent',
       displayName: 'Parent',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Ancestors',
         visible: true,
@@ -188,6 +224,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'project',
       displayName: 'Project',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Program',
         visible: true,
@@ -213,6 +255,12 @@ export const PRESET_CONFIGURATIONS: Record<string, ParentFieldConfig[]> = {
     {
       name: 'topic',
       displayName: 'Topic',
+      roots: {
+        displayName: 'Root Notes',
+        visible: true,
+        collapsed: false,
+        sortOrder: 'alphabetical'
+      },
       ancestors: {
         displayName: 'Broader Topics',
         visible: true,

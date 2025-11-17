@@ -205,6 +205,18 @@ export default class ParentRelationPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    
+    // Migration: Add roots section to existing parent fields that don't have it
+    this.settings.parentFields.forEach(fieldConfig => {
+      if (!fieldConfig.roots) {
+        fieldConfig.roots = {
+          displayName: 'Root Notes',
+          visible: true,
+          collapsed: false,
+          sortOrder: 'alphabetical'
+        };
+      }
+    });
   }
 
   async saveSettings() {

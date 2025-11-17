@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile, setIcon } from 'obsidian';
 import type ParentRelationPlugin from './main';
 import { TreeRenderer, TreeRenderContext } from './tree-renderer';
-import { buildAncestorTree, buildDescendantTree, buildSiblingTree, TreeNode } from './tree-model';
+import { buildAncestorTree, buildDescendantTree, buildSiblingTree, buildRootsList, TreeNode } from './tree-model';
 import { ParentFieldSelector } from './parent-field-selector';
 import { ContextMenuBuilder } from './context-menu-builder';
 
@@ -420,7 +420,7 @@ export class RelationSidebarView extends ItemView {
 			}
 
 			// Check if any sections will be visible
-			const hasVisibleSections = fieldConfig.ancestors.visible ||
+			const hasVisibleSections = fieldConfig.roots.visible || fieldConfig.ancestors.visible ||
 				fieldConfig.descendants.visible ||
 				fieldConfig.siblings.visible;
 
@@ -431,6 +431,12 @@ export class RelationSidebarView extends ItemView {
 
 			// Render reference note header (current file with pin button)
 			this.renderReferenceNote(file);
+
+
+			// Render roots section
+			if (fieldConfig.roots.visible) {
+				this.renderSection('roots', file, fieldConfig, engine, graph);
+			}
 
 			// Render ancestors section
 			if (fieldConfig.ancestors.visible) {
@@ -497,10 +503,10 @@ export class RelationSidebarView extends ItemView {
 	}
 
 	/**
-	 * Renders a single collapsible section (ancestors, descendants, or siblings).
+	 * Renders a single collapsible section (roots, ancestors, descendants, or siblings).
 	 */
 	private renderSection(
-		sectionType: 'ancestors' | 'descendants' | 'siblings',
+		sectionType: 'roots' | 'ancestors' | 'descendants' | 'siblings',
 		file: TFile,
 		fieldConfig: any,
 		engine: any,
@@ -539,7 +545,10 @@ export class RelationSidebarView extends ItemView {
 		}
 
 		// Build and render tree/list for this section
-		if (sectionType === 'siblings') {
+		if (sectionType === 'roots') {
+			// Render roots as a flat list
+			this.renderRootsList(graph, content, sectionConfig);
+		} else if (sectionType === 'siblings') {
 			// Render siblings as a flat list
 			this.renderSiblingsList(file, engine, content, sectionConfig);
 		} else {
@@ -692,6 +701,109 @@ export class RelationSidebarView extends ItemView {
 			});
 		});
 	}
+	/**
+	 * Renders roots as a flat list.
+	 */
+	private renderRootsList(graph: any, container: HTMLElement, sectionConfig: any): void {
+		const roots = buildRootsList(graph, {
+			detectCycles: true,
+			includeMetadata: true
+		});
+
+		if (roots.length === 0) {
+			const emptyMessage = container.createDiv('relation-section-empty');
+			emptyMessage.setText('No root notes found');
+			return;
+		}
+
+		// Sort roots based on configuration (already sorted alphabetically by findRootNotes)
+		const sortedRoots = roots.map(node => node.file);
+
+		const listContainer = container.createDiv('relation-roots-list');
+		// Match font size with tree views
+		listContainer.style.fontSize = 'var(--font-ui-small)';
+
+		sortedRoots.forEach((root: TFile) => {
+			const item = listContainer.createDiv('relation-root-item');
+
+			// File icon
+			const icon = item.createDiv('relation-root-icon');
+			icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+
+			// File name (clickable)
+			const name = item.createSpan('relation-root-name');
+			name.setText(root.basename);
+
+			// Click to open file
+			name.addEventListener('click', async (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+
+				try {
+					// Open file in split pane if Ctrl/Cmd is held
+					if (e.ctrlKey || e.metaKey) {
+						await this.app.workspace.openLinkText(root.basename, '', 'split');
+					} else {
+						const leaf = this.app.workspace.getLeaf(false);
+						await leaf.openFile(root);
+					}
+				} catch (error) {
+					console.error('[Relation Sidebar] Error opening file:', error);
+				}
+			});
+
+			// Hover preview
+			name.addEventListener('mouseenter', (e) => {
+				this.app.workspace.trigger('hover-link', {
+					event: e,
+					source: 'relation-explorer',
+					hoverParent: item,
+					targetEl: name,
+					linktext: root.path
+				});
+			});
+
+			// Context menu (right-click)
+			item.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+
+				// Create a simple TreeNode for the root
+				const rootNode: TreeNode = {
+					file: root,
+					children: [],
+					depth: 0,
+					isCycle: false,
+					metadata: {}
+				};
+
+				// Get current parent field info
+				const fieldConfig = this.plugin.settings.parentFields.find(
+					f => f.name === this.viewState.selectedParentField
+				);
+
+				// Build context menu context
+				const menuContext = {
+					node: rootNode,
+					file: root,
+					section: 'roots' as const,
+					parentField: this.viewState.selectedParentField,
+					parentFieldDisplayName: fieldConfig?.displayName || this.viewState.selectedParentField,
+					sectionDisplayName: sectionConfig.displayName || 'roots',
+					ancestorsSectionDisplayName: fieldConfig?.ancestors.displayName || 'ancestors',
+					descendantsSectionDisplayName: fieldConfig?.descendants.displayName || 'descendants',
+					sidebarView: this,
+					isPinned: this.isPinnedToCurrentField(),
+					targetElement: item,
+					event: e
+				};
+
+				// Show context menu
+				this.contextMenuBuilder.showContextMenu(menuContext);
+			});
+		});
+	}
+
 
 	/**
 	 * Toggles a section's collapsed state.
@@ -749,6 +861,8 @@ export class RelationSidebarView extends ItemView {
 	 */
 	private getEmptyMessage(sectionType: string): string {
 		switch (sectionType) {
+			case 'roots':
+				return 'No root notes found';
 			case 'ancestors':
 				return 'No ancestors found';
 			case 'descendants':

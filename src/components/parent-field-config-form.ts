@@ -60,6 +60,7 @@ export class ParentFieldConfigForm {
     }
 
     this.renderFieldSettings(bodyEl);
+    this.renderSectionConfig(bodyEl, 'roots', 'Roots Section');
     this.renderSectionConfig(bodyEl, 'ancestors', 'Ancestors Section');
     this.renderSectionConfig(bodyEl, 'descendants', 'Descendants Section');
     this.renderSectionConfig(bodyEl, 'siblings', 'Siblings Section');
@@ -138,7 +139,7 @@ export class ParentFieldConfigForm {
    */
   private renderSectionConfig(
     containerEl: HTMLElement,
-    sectionKey: 'ancestors' | 'descendants' | 'siblings',
+    sectionKey: 'roots' | 'ancestors' | 'descendants' | 'siblings',
     sectionTitle: string
   ): void {
     const sectionEl = containerEl.createDiv('section-config');
@@ -189,6 +190,8 @@ export class ParentFieldConfigForm {
     // Section-specific settings
     if (sectionKey === 'ancestors' || sectionKey === 'descendants') {
       this.renderTreeSectionSettings(sectionEl, config);
+    } else if (sectionKey === 'roots') {
+      this.renderRootsSectionSettings(sectionEl, config);
     } else if (sectionKey === 'siblings') {
       this.renderSiblingSectionSettings(sectionEl, config);
     }
@@ -262,6 +265,25 @@ export class ParentFieldConfigForm {
         });
       });
   }
+  /**
+   * Renders settings specific to roots section.
+   */
+  private renderRootsSectionSettings(containerEl: HTMLElement, config: SectionConfig): void {
+    new Setting(containerEl)
+      .setName('Sort Order')
+      .setDesc('How to sort root note items')
+      .addDropdown(dropdown => {
+        dropdown.addOption('alphabetical', 'Alphabetical');
+        dropdown.addOption('created', 'Created Date');
+        dropdown.addOption('modified', 'Modified Date');
+        dropdown.setValue(config.sortOrder || 'alphabetical');
+        dropdown.onChange(value => {
+          config.sortOrder = value as 'alphabetical' | 'created' | 'modified';
+          this.onChange(this.config);
+        });
+      });
+  }
+
 
   /**
    * Renders action buttons (duplicate).
