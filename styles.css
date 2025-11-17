@@ -780,6 +780,57 @@
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.relation-codeblock-title-details {
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-normal);
+	color: var(--text-muted);
+	margin-top: var(--size-2-1);
+}
+
+/* Codeblock List (for siblings/cousins) */
+.relation-codeblock-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-2);
+	font-size: var(--font-ui-small);
+}
+
+.relation-codeblock-list-item {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	padding: var(--size-2-1) var(--size-2-2);
+	border-radius: var(--radius-s);
+	transition: background-color 0.1s ease;
+}
+
+.relation-codeblock-list-item-clickable:hover {
+	background-color: var(--background-modifier-hover);
+	cursor: pointer;
+}
+
+.relation-codeblock-list-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+	flex-shrink: 0;
+}
+
+.relation-codeblock-list-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.relation-codeblock-list-name {
+	color: var(--text-normal);
+	cursor: pointer;
+	flex-grow: 1;
+}
+
+.relation-codeblock-list-name:hover {
+	color: var(--text-accent);
+}
+
 /* Tree Mode - ensure all standard tree styles apply */
 .relation-codeblock-mode-tree .relation-codeblock-node {
 	position: relative;

@@ -333,12 +333,8 @@ export class CodeblockProcessor {
 
 		// Render tree(s) into the tree container
 		if (Array.isArray(tree)) {
-			// Multiple trees (siblings, cousins)
-			// Each tree needs its own container since render() clears it
-			tree.forEach(node => {
-				const singleTreeContainer = treeContainer.createDiv('relation-codeblock-single-tree');
-				renderer.render(node, singleTreeContainer);
-			});
+			// Flat list (siblings, cousins) - render as list not as trees
+			this.renderNodeList(tree, treeContainer);
 		} else {
 			// Single tree (ancestors, descendants)
 			renderer.render(tree, treeContainer);
@@ -350,6 +346,60 @@ export class CodeblockProcessor {
 			truncationEl.setText(`(+${truncatedCount} more...)`);
 			truncationEl.setAttribute('title', `${truncatedCount} nodes hidden due to max-nodes limit`);
 		}
+	}
+
+	/**
+	 * Renders a flat list of nodes (for siblings/cousins).
+	 *
+	 * @param nodes - Array of TreeNode objects to render as a list
+	 * @param container - Container element to render into
+	 */
+	private renderNodeList(nodes: TreeNode[], container: HTMLElement): void {
+		const listContainer = container.createDiv('relation-codeblock-list');
+
+		nodes.forEach(node => {
+			const item = listContainer.createDiv('relation-codeblock-list-item');
+
+			// File icon
+			const icon = item.createDiv('relation-codeblock-list-icon');
+			icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+
+			// File name (clickable)
+			const name = item.createSpan('relation-codeblock-list-name');
+			name.setText(node.file.basename);
+
+			// Make clickable with navigation support
+			item.addClass('relation-codeblock-list-item-clickable');
+
+			// Click to open file
+			name.addEventListener('click', async (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+
+				try {
+					// Open file in split pane if Ctrl/Cmd is held
+					if (e.ctrlKey || e.metaKey) {
+						await this.app.workspace.openLinkText(node.file.basename, '', 'split');
+					} else {
+						const leaf = this.app.workspace.getLeaf(false);
+						await leaf.openFile(node.file);
+					}
+				} catch (error) {
+					console.error('[Codeblock Processor] Error opening file:', error);
+				}
+			});
+
+			// Hover preview
+			name.addEventListener('mouseenter', (e) => {
+				this.app.workspace.trigger('hover-link', {
+					event: e,
+					source: 'relation-codeblock',
+					hoverParent: item,
+					targetEl: name,
+					linktext: node.file.path
+				});
+			});
+		});
 	}
 
 	/**
@@ -408,7 +458,7 @@ export class CodeblockProcessor {
 			// Detailed mode: Include filtering information
 			titleText = `${typeName} of ${noteName}`;
 
-			// Add filter details
+			// Add filter details on a separate line in smaller font
 			const filterParts: string[] = [];
 			if (params.filterTag) {
 				filterParts.push(`tag: ${params.filterTag}`);
@@ -425,7 +475,14 @@ export class CodeblockProcessor {
 			}
 
 			if (filterParts.length > 0) {
-				titleText += ` (${filterParts.join(', ')})`;
+				// Create main title text
+				const mainTitleEl = titleEl.createSpan('relation-codeblock-title-main');
+				mainTitleEl.setText(titleText);
+
+				// Create details on separate line
+				const detailsEl = titleEl.createDiv('relation-codeblock-title-details');
+				detailsEl.setText(filterParts.join(', '));
+				return; // Early return since we've already populated titleEl
 			}
 		}
 
