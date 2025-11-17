@@ -320,6 +320,10 @@ export class CodeblockProcessor {
 			return;
 		}
 
+		// Create a separate container for tree content
+		// (TreeRenderer clears the container, so we need to keep title separate)
+		const treeContainer = container.createDiv('relation-codeblock-tree-content');
+
 		// Create renderer
 		const renderer = new TreeRenderer(this.app, {
 			collapsible: params.mode === 'tree',
@@ -329,15 +333,17 @@ export class CodeblockProcessor {
 			cssPrefix: 'relation-codeblock'
 		}, this.plugin);
 
-		// Render tree(s)
+		// Render tree(s) into the tree container
 		if (Array.isArray(tree)) {
 			// Multiple trees (siblings, cousins)
+			// Each tree needs its own container since render() clears it
 			tree.forEach(node => {
-				renderer.render(node, container);
+				const singleTreeContainer = treeContainer.createDiv('relation-codeblock-single-tree');
+				renderer.render(node, singleTreeContainer);
 			});
 		} else {
 			// Single tree (ancestors, descendants)
-			renderer.render(tree, container);
+			renderer.render(tree, treeContainer);
 		}
 
 		// Add truncation indicator if nodes were truncated
