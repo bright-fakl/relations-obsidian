@@ -104,6 +104,8 @@ export function selectNote(
 	notes: TFile[],
 	placeholder: string = 'Select a note...'
 ): Promise<TFile | null> {
+	console.log('[selectNote] Creating promise, notes count:', notes.length);
+
 	return new Promise((resolve) => {
 		const modal = new NoteSelectionModal(
 			app,
@@ -111,6 +113,7 @@ export function selectNote(
 			placeholder,
 			(note) => {
 				// Note was selected
+				console.log('[selectNote] onSelect callback called with note:', note.basename);
 				resolve(note);
 			}
 		);
@@ -120,6 +123,8 @@ export function selectNote(
 		let hasResolved = false;
 
 		modal.onClose = function() {
+			console.log('[selectNote] onClose called, hasResolved:', hasResolved);
+
 			// Call original cleanup
 			if (originalOnClose) {
 				originalOnClose.call(this);
@@ -128,6 +133,7 @@ export function selectNote(
 			// If we haven't resolved yet, user cancelled
 			if (!hasResolved) {
 				hasResolved = true;
+				console.log('[selectNote] Resolving with null (cancelled)');
 				resolve(null);
 			}
 		};
@@ -135,10 +141,12 @@ export function selectNote(
 		// When selection happens, mark as resolved
 		const originalOnChooseItem = modal.onChooseItem;
 		modal.onChooseItem = function(note: TFile, evt: MouseEvent | KeyboardEvent) {
+			console.log('[selectNote] onChooseItem called with note:', note.basename);
 			hasResolved = true;
 			originalOnChooseItem.call(this, note, evt);
 		};
 
+		console.log('[selectNote] Opening modal...');
 		modal.open();
 	});
 }

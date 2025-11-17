@@ -164,16 +164,25 @@ async function findPathToNote(
 	fieldName: string
 ): Promise<void> {
 	try {
+		console.log('[findPathToNote] Starting path finding...');
+		console.log('[findPathToNote] Start file:', startFile.basename);
+		console.log('[findPathToNote] Field name:', fieldName);
+
 		const graph = plugin.getGraphForField(fieldName);
 
 		if (!graph) {
+			console.error('[findPathToNote] Graph not found for field:', fieldName);
 			new Notice(`Parent field "${fieldName}" not found`);
 			return;
 		}
 
+		console.log('[findPathToNote] Graph found');
+
 		// Get all files for selection
 		const allFiles = graph.getAllFiles();
 		const otherFiles = allFiles.filter(f => f.path !== startFile.path);
+
+		console.log('[findPathToNote] Available files:', otherFiles.length);
 
 		if (otherFiles.length === 0) {
 			new Notice('No other notes in vault');
@@ -181,29 +190,43 @@ async function findPathToNote(
 		}
 
 		// Prompt user to select target note
+		console.log('[findPathToNote] Opening modal for target selection...');
 		const targetFile = await selectNote(
 			plugin.app,
 			otherFiles,
 			`Select target note [${fieldName}]...`
 		);
 
+		console.log('[findPathToNote] Modal closed, targetFile:', targetFile?.basename || 'null');
+
 		if (!targetFile) {
 			// User cancelled
+			console.log('[findPathToNote] User cancelled selection');
 			return;
 		}
+
+		console.log('[findPathToNote] Finding path from', startFile.basename, 'to', targetFile.basename);
 
 		// Find shortest path
 		const path = findShortestPath(startFile, targetFile, graph);
 
+		console.log('[findPathToNote] Path result:', path);
+
 		if (!path) {
+			console.log('[findPathToNote] No path found');
 			new Notice(`No path found from ${startFile.basename} to ${targetFile.basename} in ${fieldName}`);
 			return;
 		}
 
+		console.log('[findPathToNote] Path found, length:', path.length);
+		console.log('[findPathToNote] Calling displayPath...');
+
 		// Display path
 		displayPath(plugin, path, fieldName);
+
+		console.log('[findPathToNote] displayPath completed');
 	} catch (error) {
-		console.error('Error in findPathToNote:', error);
+		console.error('[findPathToNote] Error:', error);
 		const message = error instanceof Error ? error.message : String(error);
 		new Notice(`Error finding path: ${message}`);
 	}
@@ -217,7 +240,12 @@ async function findPathToNote(
  * @param fieldName - Parent field used
  */
 function displayPath(plugin: ParentRelationPlugin, path: NotePath, fieldName: string): void {
+	console.log('[displayPath] Called with path:', path);
+	console.log('[displayPath] Field name:', fieldName);
+
 	const pathMarkdown = exportPathToMarkdown(path.path, { useWikiLinks: false });
+
+	console.log('[displayPath] Path markdown:', pathMarkdown);
 
 	const message = [
 		`Path from ${path.start.basename} to ${path.end.basename} [${fieldName}]`,
@@ -226,5 +254,10 @@ function displayPath(plugin: ParentRelationPlugin, path: NotePath, fieldName: st
 		pathMarkdown
 	].join('\n');
 
+	console.log('[displayPath] Final message:', message);
+	console.log('[displayPath] Creating Notice...');
+
 	new Notice(message, 10000); // Show for 10 seconds
+
+	console.log('[displayPath] Notice created');
 }
