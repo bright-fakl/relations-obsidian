@@ -719,19 +719,19 @@ export class RelationSidebarView extends ItemView {
 		// Sort roots based on configuration (already sorted alphabetically by findRootNotes)
 		const sortedRoots = roots.map(node => node.file);
 
-		const listContainer = container.createDiv('relation-roots-list');
+		const listContainer = container.createDiv('relation-siblings-list');
 		// Match font size with tree views
 		listContainer.style.fontSize = 'var(--font-ui-small)';
 
 		sortedRoots.forEach((root: TFile) => {
-			const item = listContainer.createDiv('relation-root-item');
+			const item = listContainer.createDiv('relation-sibling-item');
 
 			// File icon
-			const icon = item.createDiv('relation-root-icon');
+			const icon = item.createDiv('relation-sibling-icon');
 			icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
 
 			// File name (clickable)
-			const name = item.createSpan('relation-root-name');
+			const name = item.createSpan('relation-sibling-name');
 			name.setText(root.basename);
 
 			// Click to open file
