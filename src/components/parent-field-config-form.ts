@@ -60,9 +60,27 @@ export class ParentFieldConfigForm {
     }
 
     this.renderFieldSettings(bodyEl);
-    this.renderSectionConfig(bodyEl, 'ancestors', 'Ancestors Section');
-    this.renderSectionConfig(bodyEl, 'descendants', 'Descendants Section');
-    this.renderSectionConfig(bodyEl, 'siblings', 'Siblings Section');
+
+    // Ensure sectionOrder exists, or use default
+    if (!this.config.sectionOrder) {
+      this.config.sectionOrder = ['reference', 'roots', 'ancestors', 'descendants', 'siblings'];
+    }
+
+    // Render sections in the configured order
+    this.config.sectionOrder.forEach((sectionKey, index) => {
+      if (sectionKey === 'reference') {
+        this.renderReferenceSection(bodyEl, index);
+      } else if (sectionKey === 'roots' || sectionKey === 'ancestors' || sectionKey === 'descendants' || sectionKey === 'siblings') {
+        const titleMap = {
+          'roots': 'Roots Section',
+          'ancestors': 'Ancestors Section',
+          'descendants': 'Descendants Section',
+          'siblings': 'Siblings Section'
+        };
+        this.renderSectionConfig(bodyEl, sectionKey, titleMap[sectionKey], index);
+      }
+    });
+
     this.renderActions(bodyEl);
   }
 
@@ -138,14 +156,50 @@ export class ParentFieldConfigForm {
    */
   private renderSectionConfig(
     containerEl: HTMLElement,
-    sectionKey: 'ancestors' | 'descendants' | 'siblings',
-    sectionTitle: string
+    sectionKey: 'roots' | 'ancestors' | 'descendants' | 'siblings',
+    sectionTitle: string,
+    orderIndex: number
   ): void {
     const sectionEl = containerEl.createDiv('section-config');
 
-    // Section header
+    // Section header with reorder controls
     const headerEl = sectionEl.createDiv('section-header');
-    headerEl.createEl('h4', { text: sectionTitle });
+    headerEl.style.display = 'flex';
+    headerEl.style.alignItems = 'center';
+    headerEl.style.justifyContent = 'space-between';
+
+    const titleEl = headerEl.createEl('h4', { text: sectionTitle });
+    titleEl.style.margin = '0';
+    titleEl.style.flex = '1';
+
+    // Reorder buttons container
+    const reorderContainer = headerEl.createDiv('section-reorder-buttons');
+    reorderContainer.style.display = 'flex';
+    reorderContainer.style.gap = '4px';
+
+    // Up arrow
+    const upBtn = reorderContainer.createEl('button', {
+      text: '↑',
+      cls: 'clickable-icon'
+    });
+    upBtn.style.padding = '2px 8px';
+    upBtn.disabled = orderIndex === 0;
+    upBtn.onclick = (e) => {
+      e.preventDefault();
+      this.moveSectionUp(orderIndex);
+    };
+
+    // Down arrow
+    const downBtn = reorderContainer.createEl('button', {
+      text: '↓',
+      cls: 'clickable-icon'
+    });
+    downBtn.style.padding = '2px 8px';
+    downBtn.disabled = orderIndex === (this.config.sectionOrder?.length ?? 1) - 1;
+    downBtn.onclick = (e) => {
+      e.preventDefault();
+      this.moveSectionDown(orderIndex);
+    };
 
     const config = this.config[sectionKey];
 
@@ -189,6 +243,8 @@ export class ParentFieldConfigForm {
     // Section-specific settings
     if (sectionKey === 'ancestors' || sectionKey === 'descendants') {
       this.renderTreeSectionSettings(sectionEl, config);
+    } else if (sectionKey === 'roots') {
+      this.renderRootsSectionSettings(sectionEl, config);
     } else if (sectionKey === 'siblings') {
       this.renderSiblingSectionSettings(sectionEl, config);
     }
@@ -262,6 +318,25 @@ export class ParentFieldConfigForm {
         });
       });
   }
+  /**
+   * Renders settings specific to roots section.
+   */
+  private renderRootsSectionSettings(containerEl: HTMLElement, config: SectionConfig): void {
+    new Setting(containerEl)
+      .setName('Sort Order')
+      .setDesc('How to sort root note items')
+      .addDropdown(dropdown => {
+        dropdown.addOption('alphabetical', 'Alphabetical');
+        dropdown.addOption('created', 'Created Date');
+        dropdown.addOption('modified', 'Modified Date');
+        dropdown.setValue(config.sortOrder || 'alphabetical');
+        dropdown.onChange(value => {
+          config.sortOrder = value as 'alphabetical' | 'created' | 'modified';
+          this.onChange(this.config);
+        });
+      });
+  }
+
 
   /**
    * Renders action buttons (duplicate).
@@ -316,6 +391,107 @@ export class ParentFieldConfigForm {
     if (titleEl) {
       titleEl.setText(`Field: "${this.config.name}"`);
     }
+  }
+
+  /**
+   * Renders the reference note section (current file display).
+   */
+  private renderReferenceSection(containerEl: HTMLElement, orderIndex: number): void {
+    const sectionEl = containerEl.createDiv('section-config');
+
+    // Section header with reorder controls
+    const headerEl = sectionEl.createDiv('section-header');
+    headerEl.style.display = 'flex';
+    headerEl.style.alignItems = 'center';
+    headerEl.style.justifyContent = 'space-between';
+
+    const titleEl = headerEl.createEl('h4', { text: 'Reference Note Section' });
+    titleEl.style.margin = '0';
+    titleEl.style.flex = '1';
+
+    // Reorder buttons container
+    const reorderContainer = headerEl.createDiv('section-reorder-buttons');
+    reorderContainer.style.display = 'flex';
+    reorderContainer.style.gap = '4px';
+
+    // Up arrow
+    const upBtn = reorderContainer.createEl('button', {
+      text: '↑',
+      cls: 'clickable-icon'
+    });
+    upBtn.style.padding = '2px 8px';
+    upBtn.disabled = orderIndex === 0;
+    upBtn.onclick = (e) => {
+      e.preventDefault();
+      this.moveSectionUp(orderIndex);
+    };
+
+    // Down arrow
+    const downBtn = reorderContainer.createEl('button', {
+      text: '↓',
+      cls: 'clickable-icon'
+    });
+    downBtn.style.padding = '2px 8px';
+    downBtn.disabled = orderIndex === (this.config.sectionOrder?.length ?? 1) - 1;
+    downBtn.onclick = (e) => {
+      e.preventDefault();
+      this.moveSectionDown(orderIndex);
+    };
+
+    // Description
+    const descEl = sectionEl.createDiv('section-description');
+    descEl.style.padding = '12px';
+    descEl.style.backgroundColor = 'var(--background-secondary)';
+    descEl.style.borderRadius = '4px';
+    descEl.style.marginTop = '8px';
+    descEl.setText('Displays the current file with a pin button. This section is always visible and cannot be hidden.');
+  }
+
+  /**
+   * Moves a section up in the order.
+   */
+  private moveSectionUp(index: number): void {
+    if (!this.config.sectionOrder || index === 0) return;
+
+    // Swap with previous item
+    const temp = this.config.sectionOrder[index];
+    this.config.sectionOrder[index] = this.config.sectionOrder[index - 1];
+    this.config.sectionOrder[index - 1] = temp;
+
+    // Notify parent and refresh
+    this.onChange(this.config);
+    this.refresh();
+  }
+
+  /**
+   * Moves a section down in the order.
+   */
+  private moveSectionDown(index: number): void {
+    if (!this.config.sectionOrder || index === this.config.sectionOrder.length - 1) return;
+
+    // Swap with next item
+    const temp = this.config.sectionOrder[index];
+    this.config.sectionOrder[index] = this.config.sectionOrder[index + 1];
+    this.config.sectionOrder[index + 1] = temp;
+
+    // Notify parent and refresh
+    this.onChange(this.config);
+    this.refresh();
+  }
+
+  /**
+   * Refreshes the form by re-rendering it.
+   */
+  private refresh(): void {
+    if (!this.formEl) return;
+
+    // Store current collapsed state
+    const wasCollapsed = this.collapsed;
+
+    // Clear and re-render
+    this.formEl.remove();
+    this.collapsed = wasCollapsed;
+    this.render();
   }
 
   /**

@@ -1,6 +1,7 @@
 import { TFile } from 'obsidian';
 import { RelationshipEngine } from './relationship-engine';
 import { RelationGraph } from './relation-graph';
+import { findRootNotes } from './utils/graph-analyzer';
 
 /**
  * Represents a node in a relationship tree.
@@ -392,6 +393,40 @@ export function buildSiblingTree(
 		.map(sibling => {
 			const isCycle = detectCycles ? graph.detectCycle(sibling) !== null : false;
 			return createTreeNode(sibling, 0, isCycle, {
+				detectCycles,
+				includeMetadata,
+				filter,
+				metadataProvider
+			});
+		});
+}
+
+/**
+ * Builds a roots list showing all root notes in the graph.
+ * Root notes are notes with no parents but have at least one child.
+ *
+ * @param graph - The relation graph
+ * @param options - Build options
+ * @returns Array of tree nodes (one per root note)
+ */
+export function buildRootsList(
+	graph: RelationGraph,
+	options: TreeBuildOptions = {}
+): TreeNode[] {
+	const {
+		detectCycles = true,
+		includeMetadata = true,
+		filter,
+		metadataProvider
+	} = options;
+
+	const roots = findRootNotes(graph);
+
+	return roots
+		.filter(root => !filter || filter(root))
+		.map(root => {
+			const isCycle = detectCycles ? graph.detectCycle(root) !== null : false;
+			return createTreeNode(root, 0, isCycle, {
 				detectCycles,
 				includeMetadata,
 				filter,

@@ -153,6 +153,12 @@ export interface ParentFieldConfig {
   /** Optional friendly display name for UI (e.g., "Project Hierarchy") */
   displayName?: string;
 
+  /** Order in which sections are displayed in the sidebar */
+  sectionOrder?: ('reference' | 'roots' | 'ancestors' | 'descendants' | 'siblings')[];
+
+  /** Roots section configuration */
+  roots: SectionConfig;
+
   /** Ancestors section configuration */
   ancestors: SectionConfig;
 
@@ -199,6 +205,14 @@ export const DEFAULT_SECTION_CONFIG: SectionConfig = {
 export const DEFAULT_PARENT_FIELD_CONFIG: ParentFieldConfig = {
   name: 'parent',
   displayName: 'Parent',
+  sectionOrder: ['reference', 'roots', 'ancestors', 'descendants', 'siblings'],
+  roots: {
+    ...DEFAULT_SECTION_CONFIG,
+    displayName: 'Root Notes',
+    sortOrder: 'alphabetical',
+    visible: true,
+    collapsed: false
+  },
   ancestors: {
     ...DEFAULT_SECTION_CONFIG,
     displayName: 'Ancestors',
@@ -276,6 +290,10 @@ export function validateParentFieldConfig(config: Partial<ParentFieldConfig>): b
   }
 
   // Validate each section config if present
+  if (config.roots && !validateSectionConfig(config.roots)) {
+    return false;
+  }
+
   if (config.ancestors && !validateSectionConfig(config.ancestors)) {
     return false;
   }

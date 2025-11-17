@@ -16,7 +16,7 @@ export interface NodeMenuContext {
 	file: TFile;
 
 	/** Which section the node appears in */
-	section: 'ancestors' | 'descendants' | 'siblings';
+	section: 'roots' | 'ancestors' | 'descendants' | 'siblings';
 
 	/** Currently selected parent field */
 	parentField: string;
