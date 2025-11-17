@@ -305,12 +305,8 @@ export class CodeblockProcessor {
 		}
 
 		// Render title if requested
-		console.log('[CodeblockProcessor] Title param:', params.title);
 		if (params.title && params.title !== 'none') {
-			console.log('[CodeblockProcessor] Rendering title...');
 			this.renderTitle(container, params, hasFilters, targetFile);
-		} else {
-			console.log('[CodeblockProcessor] Title condition not met');
 		}
 
 		// Handle empty result
@@ -368,7 +364,6 @@ export class CodeblockProcessor {
 		hasFilters: boolean,
 		targetFile?: TFile
 	): void {
-		console.log('[renderTitle] Called with params.title:', params.title, 'targetFile:', targetFile?.basename);
 		const titleEl = container.createDiv('relation-codeblock-title');
 
 		// Generate title text based on mode
@@ -406,7 +401,6 @@ export class CodeblockProcessor {
 			}
 		}
 
-		console.log('[renderTitle] Setting title text to:', titleText);
 		titleEl.setText(titleText);
 	}
 
