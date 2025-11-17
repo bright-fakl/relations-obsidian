@@ -186,8 +186,8 @@ export class CodeblockProcessor {
 				}
 			}
 
-			// Render tree with cycle detection
-			this.renderTree(el, finalTree, params, truncatedCount, filterFunction !== null, targetFile, fieldName, graph);
+			// Render tree (cycle indicators shown via 🔄 icon on nodes)
+			this.renderTree(el, finalTree, params, truncatedCount, filterFunction !== null, targetFile, fieldName);
 
 		} catch (error) {
 			if (error instanceof CodeblockValidationError) {
@@ -278,7 +278,6 @@ export class CodeblockProcessor {
 	 * @param hasFilters - Whether filters are active
 	 * @param targetFile - Target file for the tree (used in title)
 	 * @param fieldName - Name of the parent field being displayed
-	 * @param graph - Relation graph for cycle detection
 	 */
 	private renderTree(
 		container: HTMLElement,
@@ -287,8 +286,7 @@ export class CodeblockProcessor {
 		truncatedCount: number = 0,
 		hasFilters: boolean = false,
 		targetFile?: TFile,
-		fieldName?: string,
-		graph?: any
+		fieldName?: string
 	): void {
 		container.empty();
 		container.addClass('relation-codeblock-container');
@@ -349,10 +347,7 @@ export class CodeblockProcessor {
 			truncationEl.setAttribute('title', `${truncatedCount} nodes hidden due to max-nodes limit`);
 		}
 
-		// Add cycle warning if cycles are detected and showCycles is enabled
-		if (params.showCycles !== false && tree && graph) {
-			this.renderCycleWarning(container, tree);
-		}
+		// Note: Cycle warning removed - the 🔄 icon on individual nodes is sufficient
 	}
 
 	/**
@@ -525,58 +520,6 @@ export class CodeblockProcessor {
 		}
 	}
 
-	/**
-	 * Renders cycle warning if the tree contains any cycles at the root level.
-	 * Only shows warning for direct cycle nodes, not for descendants that happen to be cyclic.
-	 *
-	 * @param container - Container element to render into
-	 * @param tree - Tree node(s) to check for cycles
-	 */
-	private renderCycleWarning(
-		container: HTMLElement,
-		tree: TreeNode | TreeNode[]
-	): void {
-		// Collect cyclic nodes at root level (depth 0) only
-		const cyclicNodes: TreeNode[] = [];
-
-		const checkRootNode = (node: TreeNode): void => {
-			// Only check root-level nodes (depth 0)
-			if (node.depth === 0 && node.isCycle) {
-				cyclicNodes.push(node);
-			}
-		};
-
-		// Check all root trees
-		if (Array.isArray(tree)) {
-			tree.forEach(checkRootNode);
-		} else {
-			checkRootNode(tree);
-		}
-
-		// Only render warning if cycles were found at root level
-		if (cyclicNodes.length === 0) return;
-
-		// Create warning notice
-		const warning = container.createDiv('relation-codeblock-cycle-warning');
-
-		const icon = warning.createSpan('relation-codeblock-cycle-warning-icon');
-		icon.setText('⚠️');
-
-		const messageDiv = warning.createDiv('relation-codeblock-cycle-warning-message');
-
-		const title = messageDiv.createEl('strong');
-		title.setText('Cycle detected in this tree');
-
-		const details = messageDiv.createDiv('relation-codeblock-cycle-warning-details');
-		const noteText = cyclicNodes.length === 1
-			? '1 note in this tree is'
-			: `${cyclicNodes.length} notes in this tree are`;
-
-		details.setText(
-			`${noteText} part of a cycle. ` +
-			'Cyclic relationships may cause infinite traversals.'
-		);
-	}
 }
 
 /**
