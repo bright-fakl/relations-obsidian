@@ -27,6 +27,9 @@ import {
   getPresetMetadata
 } from './presets/field-configurations';
 import { registerNavigationCommands } from './commands/navigation-commands';
+import { registerAdvancedNavigationCommands } from './commands/advanced-navigation';
+import { registerGraphAnalysisCommands } from './commands/graph-analysis';
+import { registerUtilityCommands } from './commands/utility-commands';
 
 export default class ParentRelationPlugin extends Plugin {
   settings!: ParentRelationSettings;
@@ -113,6 +116,11 @@ export default class ParentRelationPlugin extends Plugin {
 
     // Register navigation commands (Milestone 6.1 Phase 1)
     registerNavigationCommands(this);
+
+    // Register advanced navigation commands (Milestone 6.2 Phase 3)
+    registerAdvancedNavigationCommands(this);
+    registerGraphAnalysisCommands(this);
+    registerUtilityCommands(this);
 
     // Register advanced commands (Milestone 4.3B Phase 4)
     this.registerCommands();
