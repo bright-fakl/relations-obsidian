@@ -627,15 +627,6 @@
   border-color: #0FB3EF !important;
 }
 
-.kofi-button svg {
-  color: white;
-  fill: white;
-}
-
-.kofi-button svg path {
-  fill: white;
-}
-
 /* Icon buttons with text - proper alignment */
 button svg + span {
   margin-left: var(--size-2-1);
