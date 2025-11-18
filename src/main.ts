@@ -755,11 +755,13 @@ class ParentRelationSettingTab extends PluginSettingTab {
    * Renders import/export section.
    */
   private renderImportExport(containerEl: HTMLElement): void {
-    const section = containerEl.createDiv('settings-section');
-    section.createEl('h3', { text: 'Configuration Import/Export' });
+    // Section heading using Obsidian's pattern
+    new Setting(containerEl)
+      .setName('Configuration')
+      .setHeading();
 
-    new Setting(section)
-      .setName('Export Configuration')
+    new Setting(containerEl)
+      .setName('Export configuration')
       .setDesc('Copy configuration to clipboard as JSON')
       .addButton(button => {
         button
@@ -772,8 +774,8 @@ class ParentRelationSettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(section)
-      .setName('Import Configuration')
+    new Setting(containerEl)
+      .setName('Import configuration')
       .setDesc('Paste and import a JSON configuration')
       .addButton(button => {
         button
@@ -803,13 +805,14 @@ class ParentRelationSettingTab extends PluginSettingTab {
    * Renders preset configurations section.
    */
   private renderPresets(containerEl: HTMLElement): void {
-    const section = containerEl.createDiv('settings-section');
-    section.createEl('h3', { text: 'Configuration Presets' });
+    new Setting(containerEl)
+      .setName('Presets')
+      .setHeading();
 
     const presetMetadata = getPresetMetadata();
 
-    new Setting(section)
-      .setName('Load Preset')
+    new Setting(containerEl)
+      .setName('Load preset')
       .setDesc('Load a predefined configuration template')
       .addDropdown(dropdown => {
         dropdown.addOption('', 'Select a preset...');
@@ -875,15 +878,17 @@ class ParentRelationSettingTab extends PluginSettingTab {
    * Renders parent fields configuration section.
    */
   private renderParentFieldsConfig(containerEl: HTMLElement): void {
-    const section = containerEl.createDiv('settings-section');
-    section.createEl('h3', { text: 'Parent Fields' });
+    new Setting(containerEl)
+      .setName('Parent fields')
+      .setHeading();
 
     // Add field button
-    new Setting(section)
+    new Setting(containerEl)
+      .setName('Add parent field')
       .setDesc('Configure parent fields with custom display names, visibility, and behavior')
       .addButton(button => {
         button
-          .setButtonText('+ Add Parent Field')
+          .setButtonText('Add field')
           .setCta()
           .onClick(() => {
             this.addParentField();
@@ -891,7 +896,7 @@ class ParentRelationSettingTab extends PluginSettingTab {
       });
 
     // Render each field configuration
-    const fieldsContainer = section.createDiv('parent-fields-container');
+    const fieldsContainer = containerEl.createDiv('parent-fields-container');
 
     this.plugin.settings.parentFields.forEach((config, index) => {
       const formContainer = fieldsContainer.createDiv();
@@ -914,11 +919,12 @@ class ParentRelationSettingTab extends PluginSettingTab {
    * Renders global settings section.
    */
   private renderGlobalSettings(containerEl: HTMLElement): void {
-    const section = containerEl.createDiv('settings-section');
-    section.createEl('h3', { text: 'Global Settings' });
+    new Setting(containerEl)
+      .setName('General')
+      .setHeading();
 
-    new Setting(section)
-      .setName('Default Parent Field')
+    new Setting(containerEl)
+      .setName('Default parent field')
       .setDesc('Which field to show by default when opening sidebar')
       .addDropdown(dropdown => {
         this.plugin.settings.parentFields.forEach(field => {
@@ -931,8 +937,8 @@ class ParentRelationSettingTab extends PluginSettingTab {
         });
       });
 
-    new Setting(section)
-      .setName('Diagnostic Mode')
+    new Setting(containerEl)
+      .setName('Diagnostic mode')
       .setDesc('Show diagnostic information in console')
       .addToggle(toggle => {
         toggle.setValue(this.plugin.settings.diagnosticMode);

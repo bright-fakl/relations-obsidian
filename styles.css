@@ -479,36 +479,9 @@
    Configuration Form Styles (Milestone 4.2B)
    ============================================ */
 
-/* Settings sections */
-.settings-section {
-  margin-bottom: var(--size-4-6);
-  padding-bottom: var(--size-4-4);
-}
-
-.settings-section:last-child {
-  padding-bottom: 0;
-}
-
-.settings-section h3 {
-  margin-top: 0;
-  margin-bottom: var(--size-4-3);
-  color: var(--text-normal);
-  font-size: 1.1em;
-}
-
-/* Preset descriptions */
-.preset-descriptions {
-  margin-top: var(--size-4-2);
-}
-
-.preset-descriptions p {
-  margin: var(--size-2-2) 0;
-  padding-left: var(--size-4-2);
-}
-
 /* Parent fields container */
 .parent-fields-container {
-  margin-top: var(--size-4-3);
+  margin-top: var(--size-4-2);
 }
 
 /* Parent field configuration form */
