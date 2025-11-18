@@ -811,7 +811,7 @@ class ParentRelationSettingTab extends PluginSettingTab {
         const btn = button.buttonEl;
         setIcon(btn, 'coffee');
         btn.createSpan({ text: ' Buy me a coffee' });
-        button.setCta();
+        btn.addClass('kofi-button');
         button.onClick(() => {
           window.open('https://ko-fi.com/fabiankloosterman', '_blank');
         });
@@ -1202,7 +1202,7 @@ class ChangelogModal extends Modal {
     `;
 
     const kofiBtn = buttonContainer.createEl('button', {
-      cls: 'mod-cta'
+      cls: 'kofi-button'
     });
     setIcon(kofiBtn, 'coffee');
     kofiBtn.createSpan({ text: ' Buy me a coffee' });
@@ -1221,62 +1221,73 @@ class ChangelogModal extends Modal {
   private async loadChangelog(): Promise<void> {
     const { contentEl } = this;
 
+    // Create changelog container first
+    const changelogDiv = contentEl.createDiv('changelog-content');
+    changelogDiv.style.cssText = `
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: var(--size-4-3);
+    `;
+
     try {
-      // Try to load CHANGELOG.md from plugin directory using fetch
-      // In production, the changelog will be bundled with the plugin
+      // Try to load CHANGELOG.md from plugin directory
       let changelogContent: string;
 
       try {
-        // Try to fetch from plugin directory
-        const response = await fetch('app://local/' + (this.app.vault as any).configDir + '/plugins/relations-obsidian/CHANGELOG.md');
-        if (response.ok) {
-          changelogContent = await response.text();
-        } else {
-          // Fallback to using adapter if available
-          const adapter = this.app.vault.adapter;
-          const manifestDir = (this.app.vault as any).configDir;
-          const pluginId = 'relations-obsidian';
-          const changelogPath = `${manifestDir}/plugins/${pluginId}/CHANGELOG.md`;
+        // Use vault adapter to read the file
+        const adapter = this.app.vault.adapter;
+        const manifestDir = (this.app.vault as any).configDir;
+        const pluginId = 'relations-obsidian';
+        const changelogPath = `${manifestDir}/plugins/${pluginId}/CHANGELOG.md`;
 
-          if (adapter && typeof (adapter as any).readBinary === 'function') {
-            const buffer = await (adapter as any).readBinary(changelogPath);
-            changelogContent = new TextDecoder().decode(buffer);
-          } else {
-            changelogContent = this.getFallbackChangelog();
-          }
+        console.log('Attempting to load CHANGELOG from:', changelogPath);
+
+        if (adapter && typeof (adapter as any).read === 'function') {
+          changelogContent = await (adapter as any).read(changelogPath);
+          console.log('Successfully loaded CHANGELOG, length:', changelogContent.length);
+        } else {
+          console.log('Adapter read not available, using fallback');
+          changelogContent = this.getFallbackChangelog();
         }
       } catch (e) {
         console.log('Could not load CHANGELOG.md, using fallback', e);
         changelogContent = this.getFallbackChangelog();
       }
 
-      // Parse and render markdown
-      const changelogDiv = contentEl.createDiv('changelog-content');
-      changelogDiv.style.cssText = `
-        max-height: 60vh;
-        overflow-y: auto;
-        padding: var(--size-4-3);
-      `;
-
-      // Use Obsidian's markdown renderer
+      // Render the markdown content
       await this.renderMarkdown(changelogContent, changelogDiv);
 
     } catch (e) {
-      console.error('Failed to load changelog:', e);
-      contentEl.createEl('p', {
-        text: 'Unable to load changelog. Please visit the GitHub repository for the latest updates.'
+      console.error('Failed to render changelog:', e);
+      changelogDiv.empty();
+      changelogDiv.createEl('p', {
+        text: 'Unable to load changelog. Please visit the GitHub repository for the latest updates.',
+        cls: 'setting-item-description'
       });
     }
   }
 
   private async renderMarkdown(markdown: string, container: HTMLElement): Promise<void> {
-    // Use Obsidian's markdown renderer
-    await (window as any).MarkdownRenderer?.renderMarkdown?.(
-      markdown,
-      container,
-      '',
-      null
-    );
+    try {
+      // Use Obsidian's markdown renderer properly
+      const MarkdownRenderer = (this.app as any).MarkdownRenderer || (window as any).MarkdownRenderer;
+
+      if (MarkdownRenderer && typeof MarkdownRenderer.renderMarkdown === 'function') {
+        await MarkdownRenderer.renderMarkdown(
+          markdown,
+          container,
+          '',
+          this
+        );
+      } else {
+        // Fallback: just set as text with basic formatting
+        console.log('MarkdownRenderer not available, using plain text');
+        container.setText(markdown);
+      }
+    } catch (e) {
+      console.error('Error rendering markdown:', e);
+      container.setText(markdown);
+    }
   }
 
   private getFallbackChangelog(): string {

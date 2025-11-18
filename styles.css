@@ -579,6 +579,16 @@
 .parent-field-config-header button.icon-button {
   padding: var(--size-2-2);
   min-width: auto;
+  background: transparent;
+  border: none;
+}
+
+.parent-field-config-header button.icon-button:hover {
+  background: var(--background-modifier-hover);
+}
+
+.parent-field-config-header button.icon-button svg {
+  color: #e25555; /* Red trash icon */
 }
 
 .parent-field-config-header button.is-disabled {
@@ -586,9 +596,40 @@
   cursor: not-allowed;
 }
 
-/* Sponsor button with heart icon - red color */
+.parent-field-config-header button.is-disabled:hover {
+  background: transparent;
+}
+
+/* Sponsor button with heart icon - red filled heart */
+.sponsor-button {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-1);
+}
+
 .sponsor-button svg {
   color: #e25555;
+  fill: #e25555; /* Filled heart */
+}
+
+/* Ko-fi button styling - Ko-fi brand colors */
+.kofi-button {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  background-color: #13C3FF !important;
+  color: white !important;
+  border-color: #13C3FF !important;
+}
+
+.kofi-button:hover {
+  background-color: #0FB3EF !important;
+  border-color: #0FB3EF !important;
+}
+
+.kofi-button svg {
+  color: white;
+  fill: white;
 }
 
 /* Icon buttons with text - proper alignment */
