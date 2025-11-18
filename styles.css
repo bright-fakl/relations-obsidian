@@ -486,7 +486,7 @@
 
 /* Parent field configuration form */
 .parent-field-config {
-  background: var(--background-secondary);
+  background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   margin-bottom: var(--size-4-3);
@@ -497,14 +497,15 @@
   display: flex;
   align-items: center;
   gap: var(--size-4-2);
-  padding: var(--size-4-3) var(--size-4-4);
-  background: var(--background-modifier-border-hover);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
   cursor: pointer;
   user-select: none;
+  transition: background-color 0.15s ease;
 }
 
 .parent-field-config-header:hover {
-  background: var(--background-modifier-border-focus);
+  background: var(--background-modifier-hover);
 }
 
 .collapse-icon {
@@ -535,7 +536,7 @@
 }
 
 .parent-field-config-body {
-  padding: var(--size-4-4);
+  padding: var(--size-4-3);
 }
 
 .parent-field-config-body.is-collapsed {
@@ -544,21 +545,70 @@
 
 /* Field settings */
 .field-settings {
-  margin-bottom: var(--size-4-5);
+  margin-bottom: var(--size-4-4);
   padding: var(--size-4-3);
-  background: var(--background-primary);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
 }
 
 /* Section configuration */
 .section-config {
-  margin-top: var(--size-4-4);
-  padding: var(--size-4-3);
-  background: var(--background-primary);
-  border-left: 3px solid var(--interactive-accent);
+  margin-top: var(--size-4-3);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
+  overflow: hidden;
 }
 
+/* Section config header (collapsible) */
+.section-config-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-2-3) var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+  transition: background-color 0.15s ease;
+}
+
+.section-config-header:hover {
+  background: var(--background-modifier-hover);
+}
+
+.section-config-header h4 {
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-normal);
+  flex: 1;
+}
+
+.section-config-collapse-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.section-config-collapse-icon svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+/* Section config body (collapsible) */
+.section-config-body {
+  padding: var(--size-4-3);
+}
+
+.section-config-body.is-collapsed {
+  display: none;
+}
+
+/* Legacy section header (for compatibility) */
 .section-header {
   margin-bottom: var(--size-4-3);
   display: flex;
@@ -585,9 +635,11 @@
 
 .section-description {
   padding: var(--size-4-3);
-  background-color: var(--background-secondary);
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
-  margin-top: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
 }
 
 /* Configuration actions */

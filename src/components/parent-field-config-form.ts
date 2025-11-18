@@ -25,6 +25,7 @@ export class ParentFieldConfigForm {
   private onCollapsedChange?: (collapsed: boolean) => void;
   private collapsed: boolean = true;
   private formEl: HTMLElement | null = null;
+  private sectionCollapsedStates: Map<string, boolean> = new Map();
 
   constructor(
     containerEl: HTMLElement,
@@ -162,8 +163,16 @@ export class ParentFieldConfigForm {
   ): void {
     const sectionEl = containerEl.createDiv('section-config');
 
-    // Section header with reorder controls
-    const headerEl = sectionEl.createDiv('section-header');
+    // Track collapsed state for this section (default to collapsed for cleaner UI)
+    const sectionCollapsed = this.sectionCollapsedStates.get(sectionKey) ?? true;
+
+    // Section header with collapse toggle and reorder controls
+    const headerEl = sectionEl.createDiv('section-config-header');
+    headerEl.style.cursor = 'pointer';
+
+    // Collapse icon
+    const collapseIcon = headerEl.createSpan('section-config-collapse-icon');
+    setIcon(collapseIcon, sectionCollapsed ? 'chevron-right' : 'chevron-down');
 
     const titleEl = headerEl.createEl('h4', { text: sectionTitle });
 
@@ -178,6 +187,7 @@ export class ParentFieldConfigForm {
     upBtn.disabled = orderIndex === 0;
     upBtn.onclick = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       this.moveSectionUp(orderIndex);
     };
 
@@ -189,13 +199,29 @@ export class ParentFieldConfigForm {
     downBtn.disabled = orderIndex === (this.config.sectionOrder?.length ?? 1) - 1;
     downBtn.onclick = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       this.moveSectionDown(orderIndex);
     };
+
+    // Make header clickable to toggle
+    headerEl.addEventListener('click', (e) => {
+      // Don't toggle if clicking the reorder buttons
+      if (e.target === upBtn || e.target === downBtn) {
+        return;
+      }
+      this.toggleSectionCollapse(sectionKey);
+    });
+
+    // Section body (collapsible)
+    const sectionBodyEl = sectionEl.createDiv('section-config-body');
+    if (sectionCollapsed) {
+      sectionBodyEl.addClass('is-collapsed');
+    }
 
     const config = this.config[sectionKey];
 
     // Display name
-    new Setting(sectionEl)
+    new Setting(sectionBodyEl)
       .setName('Display Name')
       .setDesc('Name shown in sidebar')
       .addText(text => {
@@ -208,7 +234,7 @@ export class ParentFieldConfigForm {
       });
 
     // Visibility
-    new Setting(sectionEl)
+    new Setting(sectionBodyEl)
       .setName('Visible')
       .setDesc('Show this section in the sidebar')
       .addToggle(toggle => {
@@ -220,7 +246,7 @@ export class ParentFieldConfigForm {
       });
 
     // Initial collapsed state
-    new Setting(sectionEl)
+    new Setting(sectionBodyEl)
       .setName('Initially Collapsed')
       .setDesc('Start with this section collapsed')
       .addToggle(toggle => {
@@ -233,11 +259,11 @@ export class ParentFieldConfigForm {
 
     // Section-specific settings
     if (sectionKey === 'ancestors' || sectionKey === 'descendants') {
-      this.renderTreeSectionSettings(sectionEl, config);
+      this.renderTreeSectionSettings(sectionBodyEl, config);
     } else if (sectionKey === 'roots') {
-      this.renderRootsSectionSettings(sectionEl, config);
+      this.renderRootsSectionSettings(sectionBodyEl, config);
     } else if (sectionKey === 'siblings') {
-      this.renderSiblingSectionSettings(sectionEl, config);
+      this.renderSiblingSectionSettings(sectionBodyEl, config);
     }
   }
 
@@ -373,6 +399,18 @@ export class ParentFieldConfigForm {
   }
 
   /**
+   * Toggles collapse state of a section (Roots, Ancestors, etc.).
+   */
+  private toggleSectionCollapse(sectionKey: string): void {
+    // Toggle state
+    const currentState = this.sectionCollapsedStates.get(sectionKey) ?? true;
+    this.sectionCollapsedStates.set(sectionKey, !currentState);
+
+    // Re-render to reflect changes
+    this.refresh();
+  }
+
+  /**
    * Updates the title to reflect current field name.
    */
   private updateTitle(): void {
@@ -390,8 +428,16 @@ export class ParentFieldConfigForm {
   private renderReferenceSection(containerEl: HTMLElement, orderIndex: number): void {
     const sectionEl = containerEl.createDiv('section-config');
 
-    // Section header with reorder controls
-    const headerEl = sectionEl.createDiv('section-header');
+    // Track collapsed state for this section (default to collapsed for cleaner UI)
+    const sectionCollapsed = this.sectionCollapsedStates.get('reference') ?? true;
+
+    // Section header with collapse toggle and reorder controls
+    const headerEl = sectionEl.createDiv('section-config-header');
+    headerEl.style.cursor = 'pointer';
+
+    // Collapse icon
+    const collapseIcon = headerEl.createSpan('section-config-collapse-icon');
+    setIcon(collapseIcon, sectionCollapsed ? 'chevron-right' : 'chevron-down');
 
     const titleEl = headerEl.createEl('h4', { text: 'Reference Note Section' });
 
@@ -406,6 +452,7 @@ export class ParentFieldConfigForm {
     upBtn.disabled = orderIndex === 0;
     upBtn.onclick = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       this.moveSectionUp(orderIndex);
     };
 
@@ -417,11 +464,27 @@ export class ParentFieldConfigForm {
     downBtn.disabled = orderIndex === (this.config.sectionOrder?.length ?? 1) - 1;
     downBtn.onclick = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       this.moveSectionDown(orderIndex);
     };
 
+    // Make header clickable to toggle
+    headerEl.addEventListener('click', (e) => {
+      // Don't toggle if clicking the reorder buttons
+      if (e.target === upBtn || e.target === downBtn) {
+        return;
+      }
+      this.toggleSectionCollapse('reference');
+    });
+
+    // Section body (collapsible)
+    const sectionBodyEl = sectionEl.createDiv('section-config-body');
+    if (sectionCollapsed) {
+      sectionBodyEl.addClass('is-collapsed');
+    }
+
     // Description
-    const descEl = sectionEl.createDiv('section-description');
+    const descEl = sectionBodyEl.createDiv('section-description');
     descEl.setText('Displays the current file with a pin button. This section is always visible and cannot be hidden.');
   }
 
