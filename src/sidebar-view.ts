@@ -392,16 +392,6 @@ export class RelationSidebarView extends ItemView {
 				return;
 			}
 
-			// Check if any sections will be visible
-			const hasVisibleSections = fieldConfig.roots.visible || fieldConfig.ancestors.visible ||
-				fieldConfig.descendants.visible ||
-				fieldConfig.siblings.visible;
-
-			if (!hasVisibleSections) {
-				this.showNoRelationsState();
-				return;
-			}
-
 		// Get section order (use default if not set)
 		const sectionOrder = fieldConfig.sectionOrder || ['reference', 'roots', 'ancestors', 'descendants', 'siblings'];
 
@@ -409,13 +399,13 @@ export class RelationSidebarView extends ItemView {
 		sectionOrder.forEach(sectionKey => {
 			if (sectionKey === 'reference') {
 				this.renderReferenceNote(file);
-			} else if (sectionKey === 'roots' && fieldConfig.roots.visible) {
+			} else if (sectionKey === 'roots') {
 				this.renderSection('roots', file, fieldConfig, engine, graph);
-			} else if (sectionKey === 'ancestors' && fieldConfig.ancestors.visible) {
+			} else if (sectionKey === 'ancestors') {
 				this.renderSection('ancestors', file, fieldConfig, engine, graph);
-			} else if (sectionKey === 'descendants' && fieldConfig.descendants.visible) {
+			} else if (sectionKey === 'descendants') {
 				this.renderSection('descendants', file, fieldConfig, engine, graph);
-			} else if (sectionKey === 'siblings' && fieldConfig.siblings.visible) {
+			} else if (sectionKey === 'siblings') {
 				this.renderSection('siblings', file, fieldConfig, engine, graph);
 			}
 		});
@@ -465,6 +455,11 @@ export class RelationSidebarView extends ItemView {
 		const sectionContainer = this.contentContainer.createDiv('relation-section');
 		sectionContainer.addClass(`relation-section-${sectionType}`);
 
+		// Check if section is visible
+		if (!sectionConfig.visible) {
+			sectionContainer.addClass('is-hidden');
+		}
+
 		// Check if section should be collapsed
 		const collapsedSections = this.viewState.collapsedSections[this.viewState.selectedParentField] || [];
 		const isCollapsed = sectionConfig.collapsed || collapsedSections.includes(sectionType);
@@ -504,6 +499,11 @@ export class RelationSidebarView extends ItemView {
 		const content = sectionContainer.createDiv('relation-section-content');
 		if (isCollapsed) {
 			content.addClass('is-collapsed');
+		}
+
+		// If section is not visible, don't render content (just show header with eye icon)
+		if (!sectionConfig.visible) {
+			return;
 		}
 
 		// Build and render tree/list for this section
