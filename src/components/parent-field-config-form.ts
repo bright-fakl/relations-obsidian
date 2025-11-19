@@ -265,18 +265,6 @@ export class ParentFieldConfigForm {
         });
       });
 
-    // Visibility
-    new Setting(sectionBodyEl)
-      .setName('Visible')
-      .setDesc('Show this section in the sidebar')
-      .addToggle(toggle => {
-        toggle.setValue(config.visible);
-        toggle.onChange(value => {
-          config.visible = value;
-          this.onChange(this.config);
-        });
-      });
-
     // Initial collapsed state
     new Setting(sectionBodyEl)
       .setName('Initially Collapsed')

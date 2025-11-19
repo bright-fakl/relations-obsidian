@@ -479,8 +479,22 @@ export class RelationSidebarView extends ItemView {
 		const title = header.createDiv('relation-section-title');
 		title.setText(sectionConfig.displayName || sectionType);
 
-		// Make entire header clickable
+		// Add visibility toggle button (eye icon)
+		const visibilityToggle = header.createDiv('relation-section-visibility-toggle');
+		visibilityToggle.setAttribute('aria-label', sectionConfig.visible ? 'Hide section' : 'Show section');
+		setIcon(visibilityToggle, sectionConfig.visible ? 'eye' : 'eye-off');
+		visibilityToggle.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			this.toggleSectionVisibility(sectionType);
+		});
+
+		// Make header clickable (but not the visibility toggle)
 		header.addEventListener('click', (e) => {
+			// Don't toggle collapse if clicking on visibility toggle
+			if ((e.target as Element).closest('.relation-section-visibility-toggle')) {
+				return;
+			}
 			e.preventDefault();
 			e.stopPropagation();
 			this.toggleSection(sectionType);
@@ -770,6 +784,25 @@ export class RelationSidebarView extends ItemView {
 			// Collapse
 			collapsedSections.push(sectionType);
 		}
+
+		// Re-render to update UI
+		this.updateView();
+	}
+
+	/**
+	 * Toggles a section's visibility.
+	 */
+	private toggleSectionVisibility(sectionType: 'roots' | 'ancestors' | 'descendants' | 'siblings'): void {
+		const fieldName = this.viewState.selectedParentField;
+		const fieldConfig = this.plugin.settings.parentFields.find(f => f.name === fieldName);
+
+		if (!fieldConfig) return;
+
+		// Toggle the visible property
+		fieldConfig[sectionType].visible = !fieldConfig[sectionType].visible;
+
+		// Save settings
+		this.plugin.saveSettings();
 
 		// Re-render to update UI
 		this.updateView();

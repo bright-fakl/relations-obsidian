@@ -383,6 +383,28 @@
   color: var(--text-normal);
 }
 
+.relation-section-visibility-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex-shrink: 0;
+  border-radius: var(--radius-s);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.relation-section-visibility-toggle:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.relation-section-visibility-toggle svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
 /* Section Content */
 .relation-section-content {
   padding: var(--size-4-2);
