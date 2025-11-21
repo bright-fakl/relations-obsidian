@@ -4,6 +4,7 @@ import { TreeRenderer, TreeRenderContext } from './tree-renderer';
 import { buildAncestorTree, buildDescendantTree, buildSiblingTree, buildRootsList, TreeNode } from './tree-model';
 import { ParentFieldSelector } from './parent-field-selector';
 import { ContextMenuBuilder } from './context-menu-builder';
+import { ParentFieldEditModal } from './modals/parent-field-edit-modal';
 
 /**
  * View type identifier for the relation sidebar
@@ -122,7 +123,7 @@ export class RelationSidebarView extends ItemView {
 		// Prevent sidebar container from bubbling events to ItemView, except for interactive elements
 		this.containerEl.addEventListener('click', (e) => {
 			const target = e.target as Element;
-			// Allow clicks on: tree toggles, tree names, section headers, sibling names, field selector buttons, and pin button
+			// Allow clicks on: tree toggles, tree names, section headers, sibling names, field selector buttons, pin button, and new header buttons
 			if (target &&
 				!target.closest('.relation-tree-toggle') &&
 				!target.closest('.relation-tree-name-clickable') &&
@@ -130,7 +131,10 @@ export class RelationSidebarView extends ItemView {
 				!target.closest('.relation-sibling-name') &&
 				!target.closest('.parent-field-segment') &&
 				!target.closest('.parent-field-dropdown') &&
-				!target.closest('.relation-sidebar-pin-button')) {
+				!target.closest('.relation-sidebar-pin-button') &&
+				!target.closest('.relation-sidebar-dropdown-btn') &&
+				!target.closest('.relation-sidebar-settings-btn') &&
+				!target.closest('.relation-sidebar-dropdown-menu')) {
 				e.stopPropagation();
 			}
 		}, { capture: true });
@@ -159,37 +163,121 @@ export class RelationSidebarView extends ItemView {
 	 * Creates the header section with title and controls.
 	 */
 	private createHeader(): void {
-		// Clear existing header
-		this.headerContainer.empty();
+	  // Clear existing header
+	  this.headerContainer.empty();
 
-		// Cleanup existing field selector
-		if (this.fieldSelector) {
-			this.fieldSelector.destroy();
-			this.fieldSelector = null;
-		}
+	  // Cleanup existing field selector
+	  if (this.fieldSelector) {
+	    this.fieldSelector.destroy();
+	    this.fieldSelector = null;
+	  }
 
-		const header = this.headerContainer.createDiv('relation-sidebar-header');
+	  const header = this.headerContainer.createDiv('relation-sidebar-header');
 
-		// Title
-		const title = header.createDiv('relation-sidebar-title');
-		title.setText('Relation Explorer');
+	  // Get current field config
+	  const currentField = this.plugin.settings.parentFields.find(
+	    f => f.name === this.viewState.selectedParentField
+	  );
+	  const displayName = currentField?.displayName || currentField?.name || 'Relation Explorer';
 
-		// Parent field selector (only shown if multiple fields)
-		if (this.plugin.settings.parentFields.length > 1) {
-			const selectorContainer = header.createDiv('parent-field-selector-container');
+	  // Title with display name
+	  const titleContainer = header.createDiv('relation-sidebar-title-container');
 
-			this.fieldSelector = new ParentFieldSelector(
-				this.app,
-				selectorContainer,
-				{
-					fields: this.plugin.settings.parentFields,
-					selectedField: this.viewState.selectedParentField,
-					onChange: (fieldName: string) => {
-						this.onFieldChange(fieldName);
-					}
-				}
-			);
-		}
+	  // Title group: title + chevron
+	  const titleGroup = titleContainer.createDiv('relation-sidebar-title-group');
+
+	  const title = titleGroup.createDiv('relation-sidebar-title');
+	  title.setText(displayName);
+
+	  // Chevron dropdown for field selection (only if multiple fields) - immediately after title
+	  if (this.plugin.settings.parentFields.length > 1) {
+	    const dropdownBtn = titleGroup.createEl('button', {
+	      cls: 'clickable-icon relation-sidebar-dropdown-btn',
+	      attr: { 'aria-label': 'Select parent field' }
+	    });
+	    setIcon(dropdownBtn, 'chevron-down');
+
+	    // Create dropdown menu positioned relative to title group
+	    const dropdownMenu = titleGroup.createDiv('relation-sidebar-dropdown-menu');
+	    dropdownMenu.style.position = 'absolute';
+	    dropdownMenu.style.top = '100%';
+	    dropdownMenu.style.left = '0';
+	    dropdownMenu.style.display = 'none';
+	    dropdownMenu.style.backgroundColor = 'var(--background-primary)';
+	    dropdownMenu.style.border = '1px solid var(--background-modifier-border)';
+	    dropdownMenu.style.borderRadius = 'var(--radius-m)';
+	    dropdownMenu.style.boxShadow = 'var(--shadow-dropdown)';
+	    dropdownMenu.style.zIndex = '1000';
+	    dropdownMenu.style.minWidth = '200px';
+	    dropdownMenu.style.maxHeight = '300px';
+	    dropdownMenu.style.overflowY = 'auto';
+
+	    // Populate dropdown with all fields
+	    this.plugin.settings.parentFields.forEach(field => {
+	      const item = dropdownMenu.createEl('button', {
+	        cls: 'relation-sidebar-dropdown-item',
+	        text: field.displayName || field.name
+	      });
+
+	      if (field.name === this.viewState.selectedParentField) {
+	        item.addClass('is-selected');
+	      }
+
+	      item.onclick = (e) => {
+	        e.stopPropagation();
+	        console.log('[Relation Sidebar] Field selected:', field.name);
+	        this.onFieldChange(field.name);
+	        dropdownMenu.style.display = 'none';
+	      };
+	    });
+
+	    // Toggle dropdown
+	    dropdownBtn.onclick = (e) => {
+	      e.stopPropagation();
+	      e.preventDefault();
+	      console.log('[Relation Sidebar] Chevron button clicked, opening dropdown');
+	      const isVisible = dropdownMenu.style.display !== 'none';
+	      dropdownMenu.style.display = isVisible ? 'none' : 'block';
+	      console.log('[Relation Sidebar] Dropdown display set to:', dropdownMenu.style.display);
+	    };
+
+	    // Close dropdown when clicking elsewhere
+	    document.addEventListener('click', (e) => {
+	      if (!dropdownBtn.contains(e.target as Node) && !dropdownMenu.contains(e.target as Node)) {
+	        dropdownMenu.style.display = 'none';
+	      }
+	    });
+	  }
+
+	  // Controls container (for settings icon) - pushed to the right
+	  const controls = titleContainer.createDiv('relation-sidebar-controls');
+
+	  // Settings icon for editing current field
+	  const settingsBtn = controls.createEl('button', {
+	    cls: 'clickable-icon relation-sidebar-settings-btn',
+	    attr: { 'aria-label': 'Edit parent field configuration' }
+	  });
+	  setIcon(settingsBtn, 'sliders');
+
+	  settingsBtn.onclick = (e) => {
+	    e.stopPropagation();
+	    e.preventDefault();
+	    console.log('[Relation Sidebar] Settings button clicked');
+	    const currentConfig = this.plugin.settings.parentFields.find(
+	      f => f.name === this.viewState.selectedParentField
+	    );
+	    if (currentConfig) {
+	      const modal = new ParentFieldEditModal(this.app, currentConfig, async (updatedConfig) => {
+	        this.plugin.settings.parentFields = this.plugin.settings.parentFields.map(f =>
+	          f.name === updatedConfig.name ? updatedConfig : f
+	        );
+	        await this.plugin.saveSettings();
+	        this.createHeader(); // Refresh header with new display name
+	        this.updateView();
+	      });
+	      modal.open();
+	    }
+	  };
 	}
 
 	/**
@@ -197,6 +285,7 @@ export class RelationSidebarView extends ItemView {
 	 */
 	private onFieldChange(fieldName: string): void {
 		this.viewState.selectedParentField = fieldName;
+		this.createHeader(); // Refresh header with new field name
 		this.updateView();
 	}
 
