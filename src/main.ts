@@ -20,6 +20,8 @@ import {
   validateSettings
 } from './types';
 import { ParentFieldConfigForm } from './components/parent-field-config-form';
+import { ParentFieldEditModal } from './modals/parent-field-edit-modal';
+import { ConfirmationModal } from './components/confirmation-modal';
 import {
   getPreset,
   getPresetNames,
@@ -1024,41 +1026,68 @@ class ParentRelationSettingTab extends PluginSettingTab {
       .setName('Parent fields')
       .setHeading();
 
-    // Add field button
-    new Setting(containerEl)
-      .setName('Add parent field')
-      .setDesc('Configure parent fields with custom display names, visibility, and behavior')
-      .addButton(button => {
-        const btn = button.buttonEl;
-        setIcon(btn, 'plus');
-        btn.createSpan({ text: ' Add field' });
-        button.setCta();
-        button.onClick(() => {
-          this.addParentField();
-        });
-      });
-
-    // Render each field configuration
-    const fieldsContainer = containerEl.createDiv('parent-fields-container');
-
+    // Render each field as a list item
     this.plugin.settings.parentFields.forEach((config, index) => {
-      const formContainer = fieldsContainer.createDiv();
-      const initialCollapsed = this.fieldCollapsedStates.get(config.name) ?? true;
       const isDefault = this.plugin.settings.defaultParentField === config.name;
-      const form = new ParentFieldConfigForm(
-        formContainer,
-        config,
-        (updated) => this.updateFieldConfig(index, updated),
-        () => this.removeFieldConfig(index),
-        () => this.duplicateFieldConfig(index),
-        isDefault,
-        () => this.setDefaultField(config.name),
-        initialCollapsed,
-        (collapsed) => this.fieldCollapsedStates.set(config.name, collapsed)
-      );
-      form.render();
-      this.configForms.push(form);
+      const displayName = config.displayName || config.name;
+
+      new Setting(containerEl)
+        .setName(displayName)
+        .setDesc(`Field: ${config.name}`)
+        .addExtraButton(button => {
+          button
+            .setIcon(isDefault ? 'star' : 'star-off')
+            .setTooltip(isDefault ? 'Default parent field' : 'Set as default parent field')
+            .onClick(() => {
+              if (!isDefault) {
+                this.setDefaultField(config.name);
+              }
+            });
+        })
+        .addExtraButton(button => {
+          button
+            .setIcon('pencil')
+            .setTooltip('Edit field configuration')
+            .onClick(() => {
+              const currentConfig = this.plugin.settings.parentFields[index];
+              const modal = new ParentFieldEditModal(this.app, currentConfig, (updatedConfig) => {
+                this.updateFieldConfig(index, updatedConfig);
+                this.display(); // Refresh UI to show changes
+              });
+              modal.open();
+            });
+        })
+        .addExtraButton(button => {
+          button
+            .setIcon('copy')
+            .setTooltip('Duplicate field')
+            .onClick(() => {
+              this.duplicateFieldConfig(index);
+            });
+        })
+        .addExtraButton(button => {
+          button
+            .setIcon('trash')
+            .setTooltip(isDefault ? 'Cannot delete default field' : 'Delete field')
+            .setDisabled(isDefault)
+            .onClick(() => {
+              if (!isDefault) {
+                this.removeFieldConfig(index);
+              }
+            });
+        });
     });
+
+    // Add new field button at the bottom
+    new Setting(containerEl)
+      .addButton(button => {
+        button
+          .setButtonText('+ New Field')
+          .setCta()
+          .onClick(() => {
+            this.addParentField();
+          });
+      });
   }
 
   /**
@@ -1123,10 +1152,12 @@ class ParentRelationSettingTab extends PluginSettingTab {
     }
 
     const fieldName = this.plugin.settings.parentFields[index].name;
-    this.plugin.settings.parentFields.splice(index, 1);
 
-    // Remove the collapsed state for this field
-    this.fieldCollapsedStates.delete(fieldName);
+    // Show confirmation modal
+    const confirmed = await this.confirmDelete(fieldName);
+    if (!confirmed) return;
+
+    this.plugin.settings.parentFields.splice(index, 1);
 
     // If we removed the default field, reset to first field
     if (this.plugin.settings.defaultParentField === fieldName) {
@@ -1139,6 +1170,21 @@ class ParentRelationSettingTab extends PluginSettingTab {
   }
 
   /**
+   * Shows a confirmation modal for deleting a field.
+   */
+  private async confirmDelete(fieldName: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const modal = new ConfirmationModal(
+        this.app,
+        'Delete Parent Field',
+        `Are you sure you want to delete the parent field "${fieldName}"? This action cannot be undone.`,
+        (confirmed) => resolve(confirmed)
+      );
+      modal.open();
+    });
+  }
+
+  /**
    * Duplicates a field configuration.
    */
   private async duplicateFieldConfig(index: number): Promise<void> {
@@ -1148,12 +1194,6 @@ class ParentRelationSettingTab extends PluginSettingTab {
     // Make the name unique
     duplicate.name = `${original.name}_copy`;
     duplicate.displayName = `${original.displayName || original.name} (Copy)`;
-
-    // Copy the collapsed state from the original field
-    const originalCollapsedState = this.fieldCollapsedStates.get(original.name);
-    if (originalCollapsedState !== undefined) {
-      this.fieldCollapsedStates.set(duplicate.name, originalCollapsedState);
-    }
 
     this.plugin.settings.parentFields.push(duplicate);
     await this.plugin.saveSettings();

@@ -201,10 +201,96 @@
   flex-shrink: 0;
 }
 
+.relation-sidebar-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+.relation-sidebar-title-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .relation-sidebar-title {
   font-weight: 600;
   font-size: var(--font-ui-medium);
   color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation-sidebar-dropdown-btn {
+  padding: var(--size-2-1);
+  color: var(--text-muted);
+  border-radius: var(--radius-s);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  margin-left: var(--size-2-1);
+}
+
+.relation-sidebar-dropdown-btn:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.relation-sidebar-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  flex-shrink: 0;
+}
+
+.relation-sidebar-dropdown-btn,
+.relation-sidebar-settings-btn {
+  padding: var(--size-2-1);
+  color: var(--text-muted);
+  border-radius: var(--radius-s);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.relation-sidebar-dropdown-btn:hover,
+.relation-sidebar-settings-btn:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.relation-sidebar-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-dropdown);
+  z-index: 1000;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.relation-sidebar-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: var(--size-4-2) var(--size-4-3);
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.relation-sidebar-dropdown-item:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.relation-sidebar-dropdown-item.is-selected {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 /* Sidebar Content */
@@ -1390,5 +1476,122 @@ button svg + span {
 /* Cycle node highlighting - removed heavy background, icon is sufficient */
 .relation-tree-node-content.is-cycle,
 .relation-codeblock-node-content.is-cycle {
-	/* No special styling needed - the 🔄 icon is sufficient indicator */
+ 	/* No special styling needed - the 🔄 icon is sufficient indicator */
+}
+
+/* ============================================
+    Parent Field Edit Modal Styles
+    ============================================ */
+
+/* Collapsible section container */
+.section-config-modal {
+  margin: var(--size-4-4) 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background-color: var(--background-primary);
+}
+
+/* Section header (summary) */
+.section-config-header {
+  padding: var(--size-4-2) var(--size-4-3);
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-medium);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+}
+
+.section-config-header:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+/* Expand/collapse arrow */
+.section-config-header::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: var(--size-4-1);
+  border-style: solid;
+  border-width: 5px 0 5px 8px;
+  border-color: transparent transparent transparent var(--text-muted);
+  transition: transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.section-config-modal[open] > .section-config-header::before {
+  transform: rotate(90deg);
+}
+
+/* Section title */
+.section-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+/* Section controls container */
+.section-controls {
+  display: flex;
+  gap: var(--size-2-1);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.section-controls .clickable-icon {
+  padding: var(--size-2-1);
+}
+
+/* Disabled state */
+.section-controls .clickable-icon.is-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Section content */
+.section-config-body {
+  padding: var(--size-4-2) var(--size-4-3);
+}
+
+/* ============================================
+    Parent Field Edit Modal Layout
+    ============================================ */
+
+.parent-field-edit-container {
+  display: flex;
+  flex-direction: column;
+  height: 70vh; /* Fixed height for modal */
+  max-height: 600px;
+}
+
+.parent-field-edit-header {
+  flex-shrink: 0;
+  padding: var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+}
+
+.parent-field-edit-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--size-4-3);
+}
+
+.parent-field-edit-footer {
+  flex-shrink: 0;
+  padding: var(--size-4-3);
+  border-top: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-4-2);
 }
