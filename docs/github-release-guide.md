@@ -252,7 +252,7 @@ Once you have a stable release, you can submit your plugin to the official Obsid
      "name": "Relation Explorer",
      "author": "Fabian Kloosterman",
      "description": "Visualize parent/child relationships between notes based on user-defined frontmatter fields.",
-     "repo": "fkloosterman/relations-obsidian"
+     "repo": "bright-fakl/relations-obsidian"
    }
    ```
 

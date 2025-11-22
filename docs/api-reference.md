@@ -599,8 +599,8 @@ if (result.totalCount === 0) {
 ## Support
 
 For issues, questions, or feature requests:
-- GitHub Issues: [relations-obsidian/issues](https://github.com/fkloosterman/relations-obsidian/issues)
-- Documentation: [relations-obsidian/docs](https://github.com/fkloosterman/relations-obsidian/docs)
+- GitHub Issues: [relations-obsidian/issues](https://github.com/bright-fakl/relations-obsidian/issues)
+- Documentation: [relations-obsidian/docs](https://github.com/bright-fakl/relations-obsidian/docs)
 
 ---
 

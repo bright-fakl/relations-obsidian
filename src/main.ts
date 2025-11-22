@@ -825,7 +825,7 @@ class ParentRelationSettingTab extends PluginSettingTab {
         button
           .setButtonText('View documentation')
           .onClick(() => {
-            window.open('https://fkloosterman.github.io/relations-obsidian/', '_blank');
+            window.open('https://bright-fakl.github.io/relations-obsidian/', '_blank');
           });
       });
   }
@@ -1408,7 +1408,7 @@ class ChangelogModal extends Modal {
 - Title display with multiple modes
 - List rendering for siblings and cousins
 
-For the complete changelog, visit: https://github.com/fkloosterman/relations-obsidian/blob/main/CHANGELOG.md
+For the complete changelog, visit: https://github.com/bright-fakl/relations-obsidian/blob/main/CHANGELOG.md
 `;
   }
 

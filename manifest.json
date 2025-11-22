@@ -5,6 +5,6 @@
   "minAppVersion": "1.0.0",
   "description": "Visualize parent/child relationships between notes based on user-defined frontmatter fields.",
   "author": "Fabian Kloosterman",
-  "authorUrl": "https://github.com/fkloosterman",
+  "authorUrl": "https://github.com/bright-fakl",
   "isDesktopOnly": false
 }

@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the Relation Explorer plugin for 
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/fkloosterman/relations-obsidian.git
+   git clone https://github.com/bright-fakl/relations-obsidian.git
    cd relations-obsidian
    ```
 
@@ -332,9 +332,9 @@ Follow the established format when creating new plans.
 
 ## Getting Help
 
-- **Questions**: Open a [GitHub Discussion](https://github.com/fkloosterman/relations-obsidian/discussions)
-- **Bugs**: Open a [GitHub Issue](https://github.com/fkloosterman/relations-obsidian/issues)
-- **Feature Requests**: Open a [GitHub Issue](https://github.com/fkloosterman/relations-obsidian/issues) with "enhancement" label
+- **Questions**: Open a [GitHub Discussion](https://github.com/bright-fakl/relations-obsidian/discussions)
+- **Bugs**: Open a [GitHub Issue](https://github.com/bright-fakl/relations-obsidian/issues)
+- **Feature Requests**: Open a [GitHub Issue](https://github.com/bright-fakl/relations-obsidian/issues) with "enhancement" label
 
 ## License
 

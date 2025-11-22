@@ -336,7 +336,7 @@ export class CyclesListModal extends Modal {
     learnMore.addEventListener('click', (e) => {
       e.preventDefault();
       // Open cycles guide documentation
-      window.open('https://github.com/fkloosterman/relations-obsidian/blob/main/docs/CYCLES-GUIDE.md');
+      window.open('https://github.com/bright-fakl/relations-obsidian/blob/main/docs/CYCLES-GUIDE.md');
     });
   }
 
@@ -473,7 +473,7 @@ private renderCycleWarning(
 
   link.addEventListener('click', (e) => {
     e.preventDefault();
-    window.open('https://github.com/fkloosterman/relations-obsidian/blob/main/docs/CYCLES-GUIDE.md');
+    window.open('https://github.com/bright-fakl/relations-obsidian/blob/main/docs/CYCLES-GUIDE.md');
   });
 }
 
@@ -728,7 +728,7 @@ Thank you for your interest in contributing to the Relation Explorer plugin for 
 
 1. **Fork and Clone**
    ```bash
-   git fork https://github.com/fkloosterman/relations-obsidian.git
+   git fork https://github.com/bright-fakl/relations-obsidian.git
    cd relations-obsidian
    ```
 
@@ -1045,9 +1045,9 @@ Follow the established format when creating new plans.
 
 ## Getting Help
 
-- **Questions**: Open a [GitHub Discussion](https://github.com/fkloosterman/relations-obsidian/discussions)
-- **Bugs**: Open a [GitHub Issue](https://github.com/fkloosterman/relations-obsidian/issues)
-- **Feature Requests**: Open a [GitHub Issue](https://github.com/fkloosterman/relations-obsidian/issues) with "enhancement" label
+- **Questions**: Open a [GitHub Discussion](https://github.com/bright-fakl/relations-obsidian/discussions)
+- **Bugs**: Open a [GitHub Issue](https://github.com/bright-fakl/relations-obsidian/issues)
+- **Feature Requests**: Open a [GitHub Issue](https://github.com/bright-fakl/relations-obsidian/issues) with "enhancement" label
 
 ## License
 
@@ -1581,7 +1581,7 @@ After exploring this vault:
 1. Try creating your own hierarchies
 2. Experiment with different parent fields
 3. Test cycle detection by creating intentional cycles
-4. Read the full documentation at [GitHub](https://github.com/fkloosterman/relations-obsidian)
+4. Read the full documentation at [GitHub](https://github.com/bright-fakl/relations-obsidian)
 
 Happy exploring!
 ```
@@ -1638,8 +1638,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ## Support
 
 - **Documentation**: See [docs/](docs/) folder
-- **Issues**: [GitHub Issues](https://github.com/fkloosterman/relations-obsidian/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/fkloosterman/relations-obsidian/discussions)
+- **Issues**: [GitHub Issues](https://github.com/bright-fakl/relations-obsidian/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/bright-fakl/relations-obsidian/discussions)
 ```
 
 ---

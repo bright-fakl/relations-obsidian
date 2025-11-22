@@ -874,8 +874,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 ## Author
 
 Fabian Kloosterman
-- GitHub: [@fkloosterman](https://github.com/fkloosterman)
+- GitHub: [@bright-fakl](https://github.com/bright-fakl)
 
 ## Support
 
-If you encounter any issues or have feature requests, please open an issue on the [GitHub repository](https://github.com/fkloosterman/relations-obsidian).
+If you encounter any issues or have feature requests, please open an issue on the [GitHub repository](https://github.com/bright-fakl/relations-obsidian).
