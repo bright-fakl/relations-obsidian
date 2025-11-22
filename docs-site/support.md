@@ -22,7 +22,6 @@ Support ongoing development through GitHub Sponsors:
   <img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-red?style=for-the-badge&logo=github" alt="GitHub Sponsors">
 </a>
 
-[❤️ Become a Sponsor on GitHub](https://github.com/sponsors/bright-fakl)
 
 ### Ko-fi (One-Time Donation)
 
@@ -31,8 +30,6 @@ Buy me a coffee to show appreciation:
 <a href="https://ko-fi.com/fabiankloosterman" target="_blank">
   <img src="https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-ff5e5b?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Ko-fi">
 </a>
-
-[☕ Buy me a coffee on Ko-fi](https://ko-fi.com/fabiankloosterman)
 
 ---
 

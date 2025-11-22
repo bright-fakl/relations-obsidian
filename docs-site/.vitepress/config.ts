@@ -5,10 +5,12 @@ export default defineConfig({
   description: 'Obsidian plugin for visualizing parent-child note relationships',
   base: '/relations-obsidian/',
 
+
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/guide/getting-started' },
+      { text: 'Getting Started', link: '/getting-started' },
+      { text: 'Guide', link: '/guide/usage' },
       { text: 'API Reference', link: '/reference/api' },
       { text: '❤️ Sponsor', link: '/support' },
       { text: 'GitHub', link: 'https://github.com/bright-fakl/relations-obsidian' }
@@ -25,6 +27,7 @@ export default defineConfig({
       {
         text: 'User Guide',
         items: [
+          { text: 'Basic Usage', link: '/guide/usage' },
           { text: 'Configuration', link: '/guide/configuration' },
           { text: 'Using the Sidebar', link: '/guide/sidebar' },
           { text: 'Embedding Trees', link: '/guide/codeblocks' },
