@@ -32,3 +32,7 @@ coverage/
 
 # Obsidian settings file
 data.json
+
+# VitePress
+docs-site/.vitepress/dist
+docs-site/.vitepress/cache

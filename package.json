@@ -10,7 +10,10 @@
     "version": "node scripts/version.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "docs:dev": "vitepress dev docs-site",
+    "docs:build": "vitepress build docs-site",
+    "docs:preview": "vitepress preview docs-site"
   },
   "devDependencies": {
     "@types/jsdom": "^27.0.0",
@@ -24,6 +27,7 @@
     "rollup-plugin-typescript2": "^0.31.1",
     "typescript": "^5.0.0",
     "vite": "^7.2.2",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.9"
   }
 }
